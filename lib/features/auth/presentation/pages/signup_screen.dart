@@ -1,10 +1,9 @@
-// This file is being moved to: c:\Users\User\Desktop\UD đa nền tảng\flutter_ai_tapchuan\lib\features\auth\presentation\pages\signup_screen.dart
 import 'package:flutter/material.dart';
-import '../core/constants/color_constants.dart';
-import '../core/constants/text_style_constants.dart';
-//import '../core/utils/validators.dart';
-import '../core/widgets/input_box.dart';
-import '../core/widgets/submit_button.dart';
+import '../../../../core/constants/color_constants.dart';
+import '../../../../core/constants/text_style_constants.dart';
+//import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/input_box.dart';
+import '../../../../core/widgets/submit_button.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,28 +14,17 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Các controller để lấy dữ liệu nhập vào
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  
-  String _selectedRole = 'HS'; // Mặc định là Học sinh (HS) theo API Contract
+  String _selectedRole = 'HS';
   bool _isSubmitting = false;
 
   void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSubmitting = true);
-
-      // Giả lập thời gian chờ gọi API (theo yêu cầu phi chức năng)
       await Future.delayed(const Duration(seconds: 2));
-
-      // Gọi API /signup với payload: 
-      // { "phonenumber": _phoneController.text, "password": _passwordController.text, "role": _selectedRole ... }
-      
       setState(() => _isSubmitting = false);
-      
-      // Thông báo thành công và quay lại màn hình đăng nhập
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đăng ký thành công! Vui lòng kiểm tra mã xác thực.')),
@@ -74,32 +62,23 @@ class _SignupScreenState extends State<SignupScreen> {
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Divider(color: AppColors.dividerBorder),
                 ),
-
-                // Sử dụng module InputBox mới
                 InputBox(
                   label: "Họ và Tên",
                   hintText: "Họ và tên của bạn",
                   controller: _nameController,
-                  //validator: AppValidators.validateName,
                 ),
-
                 InputBox(
                   label: "Số di động",
                   hintText: "Nhập số điện thoại (10 số)",
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  //validator: AppValidators.validatePhone,
                 ),
-
                 InputBox(
                   label: "Mật khẩu mới",
                   hintText: "Mật khẩu (6-10 ký tự)",
                   controller: _passwordController,
                   obscureText: true,
-                  //validator: AppValidators.validatePassword,
                 ),
-
-                // Phần chọn Vai trò (Role)
                 Text(
                   "Bạn là:",
                   style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
@@ -108,16 +87,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   selectedRole: _selectedRole,
                   onRoleChanged: (val) => setState(() => _selectedRole = val),
                 ),
-
                 const SizedBox(height: 30),
-
-                // Sử dụng module SubmitButton mới
                 SubmitButton(
                   text: "Gửi",
                   isLoading: _isSubmitting,
                   onPressed: _handleSignup,
                 ),
-
                 const SizedBox(height: 20),
                 Center(
                   child: TextButton(
