@@ -4,7 +4,7 @@ import '../../../../core/constants/text_style_constants.dart';
 //import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/input_box.dart';
 import '../../../../core/widgets/submit_button.dart';
-
+import '../../../../services/api_service.dart';
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -14,7 +14,6 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   String _selectedRole = 'HS';
@@ -22,14 +21,41 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isSubmitting = false);
-      if (mounted) {
+      if (_selectedRole.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đăng ký thành công! Vui lòng kiểm tra mã xác thực.')),
+          const SnackBar(content: Text('Vui lòng chọn loại người dùng (Học viên/Giáo viên)')),
+        );
+        return;
+      }
+
+      setState(() => _isSubmitting = true);
+      
+      // Gọi API Signup
+      final result = await ApiService.signup(
+        _phoneController.text, 
+        _passwordController.text,
+        _selectedRole,
+      );
+
+      setState(() => _isSubmitting = false);
+      if (!mounted) return;
+
+      if (result['code'] == '1000') {
+        // TEST CASE 1: Đăng ký thành công
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('1000 | OK: Đăng ký thành công!')),
         );
         Navigator.pop(context);
+      } else if (result['code'] == '9996') {
+        // TEST CASE 2: Số điện thoại đã tồn tại 
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('9996 | User existed: Số điện thoại đã được đăng ký')),
+        );
+      } else {
+        // Các lỗi khác từ server
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: ${result['message']}')),
+        );
       }
     }
   }
@@ -61,11 +87,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Divider(color: AppColors.dividerBorder),
-                ),
-                InputBox(
-                  label: "Họ và Tên",
-                  hintText: "Họ và tên của bạn",
-                  controller: _nameController,
                 ),
                 InputBox(
                   label: "Số di động",
@@ -135,7 +156,7 @@ class RoleRadioGroup extends StatelessWidget {
             Expanded(
               child: RadioListTile<String>(
                 title: const Text("Học viên"),
-                value: 'HS',
+                value: 'HV',
                 // ignore: deprecated_member_use
                 groupValue: selectedRole,
                 contentPadding: EdgeInsets.zero,

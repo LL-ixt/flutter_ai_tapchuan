@@ -41,6 +41,9 @@ dependencies:
   dio: ^5.4.0
   shared_preferences: ^2.2.2
   get_it: ^7.6.7
+  http: ^1.2.0
+  device_info_plus: ^10.1.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   network_image_mock: ^2.1.1
