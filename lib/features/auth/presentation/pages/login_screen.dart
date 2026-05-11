@@ -1,6 +1,8 @@
+// This file is being moved to: c:\Users\User\Desktop\UD đa nền tảng\flutter_ai_tapchuan\lib\features\auth\presentation\pages\login_screen.dart
 import 'package:flutter/material.dart';
-import '../core/constants/color_constants.dart';
-import '../core/constants/text_style_constants.dart';
+import 'package:flutter_ai_tapchuan/services/api_service.dart';
+import '../../../../core/constants/color_constants.dart';
+import '../../../../core/constants/text_style_constants.dart';
 //import '../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,14 +17,26 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  //bool _isSubmitting = false;
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
+    debugPrint("Bắt đầu xử lý đăng nhập..."); // Debug log
     if (_formKey.currentState!.validate()) {
-      // Gọi API /login từ API_Contract.md tại đây
-      // Hiển thị thông báo loading hoặc xử lý logic tiếp theo
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đang xác thực thông tin...')),
-      );
+      debugPrint("Đang gửi yêu cầu đăng nhập với số điện thoại: ${_phoneController.text}"); // Debug log
+      //setState(() => _isSubmitting = true);
+
+      final result = await ApiService.login(_phoneController.text, _passwordController.text);
+
+      //setState(() => _isSubmitting = false); 
+      if (!mounted) return;
+      if (result['code'] == '1000') {
+        String token = result['data']['token'];
+        debugPrint("Token nhận được: $token"); // Debug token
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: ${result['message']}')),
+        );
+      }
     }
   }
 
@@ -71,7 +85,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                           ),
-                          //validator: AppValidators.validatePhone, // Hãy mở lại để đúng yêu cầu [cite: 393, 458]
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Vui lòng nhập số điện thoại';
+                            }
+                            if (value.length < 10) {
+                              return 'Số điện thoại không hợp lệ';
+                            }
+                            return null;
+                          }, // Hãy mở lại để đúng yêu cầu [cite: 393, 458]
                         ),
                         const SizedBox(height: 15),
 
@@ -100,7 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                           ),
-                          //validator: AppValidators.validatePassword, // Mở lại để app tự xác thực [cite: 398, 464]
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Vui lòng nhập mật khẩu';
+                            }
+                            if (value.length < 6) {
+                              return 'Mật khẩu phải có ít nhất 6 ký tự';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 25),
 
