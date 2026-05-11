@@ -46,6 +46,7 @@ dependencies:
   crypto: ^3.0.3
 
 dev_dependencies:
+  network_image_mock: ^2.1.1
   flutter_test:
     sdk: flutter
 
@@ -55,6 +56,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Bloc & Mocking for Testing
+  bloc_test: ^9.1.5
+  mocktail: ^1.0.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,3 +1,4 @@
+// This file is being moved to: c:\Users\User\Desktop\UD đa nền tảng\flutter_ai_tapchuan\lib\features\auth\presentation\pages\signup_screen.dart
 import 'package:flutter/material.dart';
 import '../core/constants/color_constants.dart';
 import '../core/constants/text_style_constants.dart';
@@ -30,7 +31,7 @@ class _SignupScreenState extends State<SignupScreen> {
       // Giả lập thời gian chờ gọi API (theo yêu cầu phi chức năng)
       await Future.delayed(const Duration(seconds: 2));
 
-      // TODO: Gọi API /signup với payload: 
+      // Gọi API /signup với payload: 
       // { "phonenumber": _phoneController.text, "password": _passwordController.text, "role": _selectedRole ... }
       
       setState(() => _isSubmitting = false);
@@ -160,8 +161,10 @@ class RoleRadioGroup extends StatelessWidget {
               child: RadioListTile<String>(
                 title: const Text("Học viên"),
                 value: 'HS',
+                // ignore: deprecated_member_use
                 groupValue: selectedRole,
                 contentPadding: EdgeInsets.zero,
+                // ignore: deprecated_member_use
                 onChanged: (val) => onRoleChanged(val!),
               ),
             ),
@@ -169,8 +172,10 @@ class RoleRadioGroup extends StatelessWidget {
               child: RadioListTile<String>(
                 title: const Text("Giáo viên"),
                 value: 'GV',
+                // ignore: deprecated_member_use
                 groupValue: selectedRole,
                 contentPadding: EdgeInsets.zero,
+                // ignore: deprecated_member_use
                 onChanged: (val) => onRoleChanged(val!),
               ),
             ),
