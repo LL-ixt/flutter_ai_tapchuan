@@ -88,7 +88,7 @@ void main() {
         );
 
         // Ban đầu icon Thích là chưa active
-        Icon likeIcon = tester.widget<Icon>(find.byIcon(Icons.thumb_up_outlined));
+        Icon likeIcon = tester.widget<Icon>(find.byIcon(Icons.thumb_up_outlined).first);
         expect(likeIcon, isNotNull);
 
         // Tap vào nút Thích (tìm theo text 'Thích' rồi lấy InkWell cha)
@@ -98,8 +98,8 @@ void main() {
         // State đã thay đổi, widget được build lại
         expect(likeState, true);
         
-        // Expect icon Thích đổi thành icon đã active
-        Icon activeLikeIcon = tester.widget<Icon>(find.byIcon(Icons.thumb_up));
+        // Expect icon Thích đổi thành icon đã active (nó là nút cuối cùng, nút đầu tiên là icon nhỏ màu trắng)
+        Icon activeLikeIcon = tester.widget<Icon>(find.byIcon(Icons.thumb_up).last);
         expect(activeLikeIcon.color, const Color(0xFF1877F2)); // AppColors.primaryBlue
       });
     });

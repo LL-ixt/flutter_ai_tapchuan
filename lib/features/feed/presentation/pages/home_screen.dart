@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HomeView extends StatelessWidget {
-  const _HomeView({super.key});
+  const _HomeView();
 
   @override
   Widget build(BuildContext context) {
