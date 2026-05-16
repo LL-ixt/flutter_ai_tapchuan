@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/course/presentation/pages/course_request_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../bloc/course_cubit.dart';
@@ -32,8 +33,9 @@ class CourseTab extends StatelessWidget {
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.primaryBlue,
               tabs: [
+                Tab(text: 'Yêu cầu học'),
                 Tab(text: 'Đã đăng ký'),
-                Tab(text: 'Danh sách học viên'),
+                
               ],
             ),
           ),
@@ -46,8 +48,9 @@ class CourseTab extends StatelessWidget {
               } else if (state is CourseLoaded) {
                 return TabBarView(
                   children: [
+                    const CourseRequestTab(),
                     _buildRegisteredCourses(state.registeredCourses),
-                    _buildStudentList(context, state.students),
+                    
                   ],
                 );
               }

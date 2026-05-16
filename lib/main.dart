@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/core/constants/color_constants.dart';
+import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'features/main/presentation/pages/main_screen.dart';
 

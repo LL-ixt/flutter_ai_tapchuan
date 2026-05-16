@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
@@ -44,7 +45,22 @@ class _HomeView extends StatelessWidget {
             ),
             floating: true,
             actions: [
-              _buildAppBarIcon(Icons.search),
+              // --- BẮT ĐẦU NÚT KÍNH LÚP ---
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                decoration: const BoxDecoration(
+                  color: AppColors.scaffoldBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.search, color: AppColors.textPrimary, size: 22),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
+                  },
+                  splashRadius: 24,
+                ),
+              ),
+              // --- KẾT THÚC NÚT KÍNH LÚP ---
               const SizedBox(width: 8.0),
               _buildAppBarIcon(Icons.messenger_outline), // Tương đương Messenger
               const SizedBox(width: 16.0),

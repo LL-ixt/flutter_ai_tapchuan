@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
@@ -60,10 +61,13 @@ class _ProfileView extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: [
+     actions: [
         IconButton(
           icon: const Icon(Icons.search, color: AppColors.textPrimary),
-          onPressed: () {},
+          onPressed: () {
+            // Lệnh phóng sang trang Tìm Kiếm
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
+          },
         ),
       ],
     );
