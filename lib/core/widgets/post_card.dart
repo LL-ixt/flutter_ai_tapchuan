@@ -301,27 +301,7 @@ class PostCard extends StatelessWidget {
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(16.0),
-                  children: [
-                    _buildCommentItem(
-                      name: "Giảng viên Nguyễn Văn A",
-                      avatar: "https://i.pravatar.cc/150?u=gv1",
-                      content: "Bài làm rất tốt, góc quay rõ ràng.",
-                      time: "1 giờ trước",
-                    ),
-                    _buildCommentItem(
-                      name: "AI Chấm Điểm",
-                      avatar: "https://i.pravatar.cc/150?img=11",
-                      content: "Phân tích chuyển động: Độ chính xác 85%. Tốc độ tay hơi chậm ở giây thứ 10. Điểm: 8.5/10.",
-                      time: "2 giờ trước",
-                      isAi: true,
-                    ),
-                    _buildCommentItem(
-                      name: "Trần Thị B",
-                      avatar: "https://i.pravatar.cc/150?u=hs2",
-                      content: "Bạn quay bằng máy gì mà nét vậy?",
-                      time: "3 giờ trước",
-                    ),
-                  ],
+                  children: _buildCommentList(),
                 ),
               ),
               Container(
@@ -365,6 +345,47 @@ class PostCard extends StatelessWidget {
         );
       },
     );
+  }
+
+  List<Widget> _buildCommentList() {
+    final comments = postData['comments'] as List<dynamic>?;
+    
+    if (comments != null && comments.isNotEmpty) {
+      return comments.map((c) {
+        final comment = c as Map<String, dynamic>;
+        final isAi = comment['author'] == 'AI System';
+        return _buildCommentItem(
+          name: comment['author'] ?? 'Người dùng',
+          avatar: comment['avatar'] ?? 'https://i.pravatar.cc/150?img=11',
+          content: comment['text'] ?? '',
+          time: comment['created_at'] ?? 'Vừa xong',
+          isAi: isAi,
+        );
+      }).toList();
+    }
+
+    // Fallback cho bài viết chưa có list comment thực tế
+    return [
+      _buildCommentItem(
+        name: "Giảng viên Nguyễn Văn A",
+        avatar: "https://i.pravatar.cc/150?u=gv1",
+        content: "Bài làm rất tốt, góc quay rõ ràng.",
+        time: "1 giờ trước",
+      ),
+      _buildCommentItem(
+        name: "AI Chấm Điểm",
+        avatar: "https://i.pravatar.cc/150?img=11",
+        content: "Phân tích chuyển động: Độ chính xác 85%. Tốc độ tay hơi chậm ở giây thứ 10. Điểm: 8.5/10.",
+        time: "2 giờ trước",
+        isAi: true,
+      ),
+      _buildCommentItem(
+        name: "Trần Thị B",
+        avatar: "https://i.pravatar.cc/150?u=hs2",
+        content: "Bạn quay bằng máy gì mà nét vậy?",
+        time: "3 giờ trước",
+      ),
+    ];
   }
 
   Widget _buildCommentItem({

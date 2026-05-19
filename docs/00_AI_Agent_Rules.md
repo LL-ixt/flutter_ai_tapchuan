@@ -32,3 +32,14 @@
   1. Render Test: Ensure all UI components load without overflow errors.
   2. Empty/Null State Test: Check UI behavior when mock data is empty.
   3. Interaction Test: Simulate `tester.tap` on buttons and verify state changes (e.g., Like button turns blue).
+  ## 5. Strict Validation & Offline Rules (TỪ PDF ĐẶC TẢ)
+- **Luôn Validate Client-side trước khi gọi API:**
+  + Số điện thoại: Đúng 10 số, bắt đầu bằng '0'.
+  + Mật khẩu: 6-10 ký tự, KHÔNG chứa ký tự đặc biệt.
+  + Text: <= 500 từ.
+  + Media: Video phải >= 10 giây.
+- **Xử lý Mất mạng (Offline Mode):** 
+  + Luôn kiểm tra mạng trước khi gửi API. Nếu mất mạng, tuyệt đối không văng app (crash), hiển thị ngay Toast/Snackbar: "Không thể kết nối Internet".
+  + Các màn hình Trang chủ (Feed) và Bình luận (Comments) BẮT BUỘC phải dùng dữ liệu từ Local Cache nếu mất mạng.
+- **Loading State:** Sử dụng `Skeleton Loader` (hiệu ứng lấp lánh màu xám) thay cho vòng tròn xoay (CircularProgressIndicator) ở các danh sách (Feed, Comments, Search).
+- **Color Management:** Toàn bộ màu sắc phải lấy từ `color_constants.dart`, TUYỆT ĐỐI không hardcode mã màu HEX trực tiếp vào UI.

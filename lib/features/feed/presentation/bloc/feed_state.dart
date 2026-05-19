@@ -6,7 +6,9 @@ class FeedLoading extends FeedState {}
 
 class FeedLoaded extends FeedState {
   final List<Map<String, dynamic>> posts;
-  FeedLoaded(this.posts);
+  final bool isOffline;
+  final String? errorMessage;
+  FeedLoaded(this.posts, {this.isOffline = false, this.errorMessage});
 }
 
 class FeedError extends FeedState {

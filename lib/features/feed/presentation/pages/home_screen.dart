@@ -5,8 +5,12 @@ import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../../../core/widgets/post_card.dart';
 import '../../../post/presentation/pages/create_post_screen.dart';
+import '../../../search/presentation/pages/search_screen.dart';
 import '../bloc/feed_cubit.dart';
 import '../bloc/feed_state.dart';
+import '../../../chat/presentation/pages/inbox_screen.dart';
+
+// Removed unused imports
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,7 +26,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HomeView extends StatelessWidget {
-  const _HomeView({super.key});
+  const _HomeView();
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +48,31 @@ class _HomeView extends StatelessWidget {
             ),
             floating: true,
             actions: [
-              _buildAppBarIcon(Icons.search),
+              _buildAppBarIcon(
+                context,
+                Icons.search,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SearchScreen(),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(width: 8.0),
-              _buildAppBarIcon(Icons.messenger_outline), // Tương đương Messenger
+              _buildAppBarIcon(
+                context,
+                Icons.messenger_outline,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const InboxScreen(),
+                    ),
+                  );
+                },
+              ), // Tương đương Messenger
               const SizedBox(width: 16.0),
             ],
           ),
@@ -55,7 +81,10 @@ class _HomeView extends StatelessWidget {
           SliverToBoxAdapter(
             child: Container(
               color: AppColors.surfaceWhite,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               margin: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
@@ -80,14 +109,19 @@ class _HomeView extends StatelessWidget {
                       },
                       borderRadius: BorderRadius.circular(24),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.dividerBorder),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Text(
                           'Bạn đang nghĩ gì?',
-                          style: AppTextStyles.bodyMain.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.bodyMain.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -99,8 +133,23 @@ class _HomeView extends StatelessWidget {
             ),
           ),
 
-          // Render List Post bằng BlocBuilder
-          BlocBuilder<FeedCubit, FeedState>(
+          // Render List Post bằng BlocConsumer
+          BlocConsumer<FeedCubit, FeedState>(
+            listener: (context, state) {
+              if (state is FeedLoaded &&
+                  state.isOffline &&
+                  state.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.errorMessage!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             builder: (context, state) {
               if (state is FeedInitial || state is FeedLoading) {
                 return const SliverFillRemaining(
@@ -112,20 +161,17 @@ class _HomeView extends StatelessWidget {
                 );
               } else if (state is FeedLoaded) {
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final post = state.posts[index];
-                      return PostCard(
-                        postData: post,
-                        isLiked: post['isLiked'] ?? false,
-                        onLikeToggle: () {
-                          // Dispatch sự kiện đổi trạng thái Thích
-                          context.read<FeedCubit>().toggleLike(post['id']);
-                        },
-                      );
-                    },
-                    childCount: state.posts.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final post = state.posts[index];
+                    return PostCard(
+                      postData: post,
+                      isLiked: post['isLiked'] ?? false,
+                      onLikeToggle: () {
+                        // Dispatch sự kiện đổi trạng thái Thích
+                        context.read<FeedCubit>().toggleLike(post['id']);
+                      },
+                    );
+                  }, childCount: state.posts.length),
                 );
               } else if (state is FeedError) {
                 return SliverFillRemaining(
@@ -146,7 +192,11 @@ class _HomeView extends StatelessWidget {
   }
 
   // Nút tròn trên AppBar
-  Widget _buildAppBarIcon(IconData icon) {
+  Widget _buildAppBarIcon(
+    BuildContext context,
+    IconData icon, {
+    VoidCallback? onPressed,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: const BoxDecoration(
@@ -155,7 +205,7 @@ class _HomeView extends StatelessWidget {
       ),
       child: IconButton(
         icon: Icon(icon, color: AppColors.textPrimary, size: 22),
-        onPressed: () {},
+        onPressed: onPressed ?? () {},
         splashRadius: 24,
       ),
     );
