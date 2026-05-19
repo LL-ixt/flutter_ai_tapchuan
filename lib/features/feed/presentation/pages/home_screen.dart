@@ -12,16 +12,23 @@ import '../../../chat/presentation/pages/inbox_screen.dart';
 
 // Removed unused imports
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<FeedCubit>().fetchPosts();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Inject BLoC ở cấp cao nhất của màn hình này
-    return BlocProvider(
-      create: (context) => FeedCubit()..fetchPosts(),
-      child: const _HomeView(),
-    );
+    return const _HomeView();
   }
 }
 
@@ -96,14 +103,10 @@ class _HomeView extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        final feedCubit = context.read<FeedCubit>();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => BlocProvider.value(
-                              value: feedCubit,
-                              child: const CreatePostScreen(),
-                            ),
+                            builder: (context) => const CreatePostScreen(),
                           ),
                         );
                       },

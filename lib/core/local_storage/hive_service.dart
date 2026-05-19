@@ -8,5 +8,6 @@ class HiveService {
     await Hive.initFlutter();
     await Hive.openBox(cachedPostsBox);
     await Hive.openBox(searchHistoryBox);
+    await Hive.openBox('feedBox');
   }
 }

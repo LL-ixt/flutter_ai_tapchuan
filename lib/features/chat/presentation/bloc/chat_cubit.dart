@@ -1,37 +1,37 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../data/datasources/chat_remote_data_source.dart';
 import 'chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  // Mock data ban đầu
-  final List<Map<String, dynamic>> _messages = [
-    {
-      "text": "Tuyệt vời, cảm ơn cậu nhiều nhé!",
-      "isMe": true,
-    },
-    {
-      "text": "Tớ gửi tài liệu qua mail rồi đó, cậu check xem nhận được chưa.",
-      "isMe": false,
-    },
-    {
-      "text": "Ok cậu, mai tớ qua.",
-      "isMe": true,
-    },
-    {
-      "text": "Mai rảnh qua thư viện mượn sách không?",
-      "isMe": false,
-    },
-    {
-      "text": "Chào cậu!",
-      "isMe": true,
-    },
-    {
-      "text": "Chào bạn, mình học chung lớp lập trình nè.",
-      "isMe": false,
-    },
-  ];
+  final ChatRemoteDataSource _chatRemoteDataSource;
+  List<Map<String, dynamic>> _messages = [];
 
-  ChatCubit() : super(const ChatInitial(messages: [])) {
-    emit(ChatUpdated(messages: List.from(_messages)));
+  ChatCubit(this._chatRemoteDataSource) : super(const ChatInitial(messages: []));
+
+  // Tạm thời chưa dùng ở UI nhưng có thể gọi khi mở màn hình inbox
+  void fetchConversations() async {
+    try {
+      await _chatRemoteDataSource.getConversations(0, 20);
+      // Xử lý conversations nếu UI hỗ trợ
+    } catch (e) {
+      // Bỏ qua lỗi hoặc xử lý
+    }
+  }
+
+  void fetchMessages(String partnerId) async {
+    emit(const ChatLoading(messages: []));
+    try {
+      final messageModels = await _chatRemoteDataSource.getMessages(partnerId, 0, 50);
+      _messages = messageModels.map((m) {
+        return {
+          "text": m.message,
+          "isMe": m.isMe,
+        };
+      }).toList();
+      emit(ChatUpdated(messages: List.from(_messages)));
+    } catch (e) {
+      emit(ChatError(messages: _messages, error: e.toString()));
+    }
   }
 
   void sendMessage(String text) async {
@@ -44,12 +44,10 @@ class ChatCubit extends Cubit<ChatState> {
     });
     emit(ChatUpdated(messages: List.from(_messages)));
 
-    // 2. Giả lập độ trễ 2 giây
+    // Hiện tại Backend chưa có API send_message theo file docs nên chỉ mock response hoặc đợi làm API sau
     await Future.delayed(const Duration(seconds: 2));
-
-    // 3. Thêm tin nhắn tự động phản hồi
     _messages.insert(0, {
-      "text": "Đây là tin nhắn trả lời tự động!",
+      "text": "Tin nhắn tự động (Chưa có API send_message)",
       "isMe": false,
     });
     emit(ChatUpdated(messages: List.from(_messages)));

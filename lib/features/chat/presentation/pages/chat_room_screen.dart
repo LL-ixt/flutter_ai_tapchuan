@@ -7,7 +7,7 @@ import '../widgets/chat_bubble.dart';
 import '../bloc/chat_cubit.dart';
 import '../bloc/chat_state.dart';
 
-class ChatRoomScreen extends StatelessWidget {
+class ChatRoomScreen extends StatefulWidget {
   final String partnerName;
   final String partnerAvatar;
 
@@ -18,29 +18,18 @@ class ChatRoomScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ChatCubit(),
-      child: _ChatRoomView(partnerName: partnerName, partnerAvatar: partnerAvatar),
-    );
-  }
+  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomView extends StatefulWidget {
-  final String partnerName;
-  final String partnerAvatar;
-
-  const _ChatRoomView({
-    required this.partnerName,
-    required this.partnerAvatar,
-  });
+class _ChatRoomScreenState extends State<ChatRoomScreen> {
+  final TextEditingController _messageController = TextEditingController();
 
   @override
-  State<_ChatRoomView> createState() => _ChatRoomViewState();
-}
-
-class _ChatRoomViewState extends State<_ChatRoomView> {
-  final TextEditingController _messageController = TextEditingController();
+  void initState() {
+    super.initState();
+    // Tạm gọi với ID đối tác giả định vì UI cũ chưa truyền partnerId
+    context.read<ChatCubit>().fetchMessages("mock_partner_id");
+  }
 
   @override
   void dispose() {

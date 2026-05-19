@@ -1,16 +1,35 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/error/exceptions.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit() : super(const AuthState.initial());
+  final AuthRepository _authRepository;
+
+  AuthCubit(this._authRepository) : super(const AuthState.initial());
 
   void login({required String phone, required String password}) async {
     emit(const AuthState.loading());
-    // Thực hiện gọi API đăng nhập ở đây
-    await Future.delayed(const Duration(seconds: 2));
-    // Giả lập thành công
-    emit(const AuthState.success());
-    // Nếu thất bại: emit(AuthState.failure('Lỗi đăng nhập'));
+    try {
+      await _authRepository.login(phone, password, 'mock_device_uuid');
+      emit(const AuthState.success());
+    } on ServerException catch (e) {
+      emit(AuthState.failure(e.message));
+    } catch (e) {
+      emit(AuthState.failure('Lỗi hệ thống: $e'));
+    }
+  }
+
+  void signup({required String phone, required String password, required String role}) async {
+    emit(const AuthState.loading());
+    try {
+      await _authRepository.signup(phone, password, 'mock_device_uuid');
+      emit(const AuthState.success());
+    } on ServerException catch (e) {
+      emit(AuthState.failure(e.message));
+    } catch (e) {
+      emit(AuthState.failure('Lỗi hệ thống: $e'));
+    }
   }
 
   void logout() {

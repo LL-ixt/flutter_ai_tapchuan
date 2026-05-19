@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
@@ -12,10 +13,7 @@ class CreatePostScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => PostCubit(),
-      child: const _CreatePostView(),
-    );
+    return const _CreatePostView();
   }
 }
 
@@ -146,7 +144,13 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           url: state.leftVideoUrl,
                           label: 'Chọn Video Trái',
-                          onTap: () => context.read<PostCubit>().pickLeftVideo(),
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final video = await picker.pickVideo(source: ImageSource.gallery);
+                            if (video != null && context.mounted) {
+                              context.read<PostCubit>().pickLeftVideo(video.path);
+                            }
+                          },
                           onRemove: () => context.read<PostCubit>().removeLeftVideo(),
                         ),
                       ),
@@ -156,7 +160,13 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           url: state.rightVideoUrl,
                           label: 'Chọn Video Phải',
-                          onTap: () => context.read<PostCubit>().pickRightVideo(),
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final video = await picker.pickVideo(source: ImageSource.gallery);
+                            if (video != null && context.mounted) {
+                              context.read<PostCubit>().pickRightVideo(video.path);
+                            }
+                          },
                           onRemove: () => context.read<PostCubit>().removeRightVideo(),
                         ),
                       ),
@@ -190,7 +200,11 @@ class _CreatePostView extends StatelessWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(url, fit: BoxFit.cover),
+                // Vì url giờ là local path (không phải http url), hiển thị một icon tượng trưng thay vì Image.network
+                child: Container(
+                  color: Colors.grey[800],
+                  child: const Icon(Icons.video_file, color: Colors.white54, size: 80),
+                ),
               ),
             ),
             Container(
@@ -199,7 +213,7 @@ class _CreatePostView extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
+              child: const Icon(Icons.check, color: Colors.greenAccent, size: 36),
             ),
             Positioned(
               top: 8,
@@ -214,6 +228,18 @@ class _CreatePostView extends StatelessWidget {
                   ),
                   child: const Icon(Icons.close, color: Colors.white, size: 16),
                 ),
+              ),
+            ),
+            // Hiển thị tên file video ở dưới cùng
+            Positioned(
+              bottom: 8,
+              left: 8,
+              right: 8,
+              child: Text(
+                url.split('/').last,
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

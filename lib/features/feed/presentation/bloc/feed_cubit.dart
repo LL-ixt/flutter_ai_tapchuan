@@ -1,69 +1,32 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import '../../../../core/local_storage/hive_service.dart';
 import '../../../../core/utils/dtw_calculator.dart';
+import '../../domain/repositories/feed_repository.dart';
+import '../../data/models/post_model.dart';
 import 'feed_state.dart';
 
 class FeedCubit extends Cubit<FeedState> {
-  FeedCubit() : super(FeedInitial());
+  final FeedRepository _feedRepository;
+
+  FeedCubit(this._feedRepository) : super(FeedInitial());
 
   void fetchPosts() async {
-    final box = Hive.box(HiveService.cachedPostsBox);
-    List<Map<String, dynamic>> cachedPosts = [];
-
-    // 1. Đọc từ cache
-    final cachedData = box.get('posts');
-    if (cachedData != null) {
-      cachedPosts = List<Map<String, dynamic>>.from(
-        (cachedData as List).map((e) => Map<String, dynamic>.from(e as Map)),
-      );
-      emit(FeedLoaded(cachedPosts));
-    } else {
-      emit(FeedLoading());
-    }
+    emit(FeedLoading());
 
     try {
-      // Giả lập delay mạng 1.5 giây
-      await Future.delayed(const Duration(milliseconds: 1500));
+      final posts = await _feedRepository.getListPosts();
+      
+      // Chuyển đổi Post object sang Map<String, dynamic> để tương thích với UI cũ
+      final List<Map<String, dynamic>> postMaps = posts.map((post) {
+        if (post is PostModel) {
+          return post.toJson();
+        }
+        return <String, dynamic>{};
+      }).toList();
 
-      // MOCK LỖI MẠNG ĐỂ TEST CƠ CHẾ OFFLINE
-      // throw Exception('Lỗi rớt mạng giả lập!');
-
-      // Mock 5 bài viết theo format của API Contract
-      final List<Map<String, dynamic>> mockPosts = List.generate(5, (index) {
-        return {
-          "id": "post_$index",
-          "author": {
-            "id": "user_$index",
-            "username": "Học viên $index",
-            "avatar": "https://i.pravatar.cc/150?u=user_$index",
-          },
-          "described":
-              "Đây là bài tập phần ${index + 1} của mình. Mọi người xem thử và góp ý giúp mình nhé!",
-          "created_at": "${index + 1} giờ trước",
-          "like": "${(index + 1) * 15}",
-          "comment": "${(index + 1) * 4}",
-          "isLiked": false,
-        };
-      });
-
-      // 3. Lưu đè cache mới
-      await box.put('posts', mockPosts);
-
-      emit(FeedLoaded(mockPosts));
+      emit(FeedLoaded(postMaps));
     } catch (e) {
-      // Bắt lỗi mất mạng, nếu có cache thì giữ nguyên cache và hiện SnackBar
-      if (cachedPosts.isNotEmpty) {
-        emit(
-          FeedLoaded(
-            cachedPosts,
-            isOffline: true,
-            errorMessage: 'Không thể kết nối Internet',
-          ),
-        );
-      } else {
-        emit(FeedError('Không thể kết nối Internet'));
-      }
+      // Vì repository đã xử lý offline cache, nếu lỗi văng ra nghĩa là không có cả mạng lẫn cache
+      emit(FeedError(e.toString()));
     }
   }
 

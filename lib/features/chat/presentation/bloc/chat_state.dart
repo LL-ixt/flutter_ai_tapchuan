@@ -24,3 +24,22 @@ class ChatUpdated extends ChatState {
   @override
   List<Object?> get props => [messages];
 }
+
+class ChatLoading extends ChatState {
+  final List<Map<String, dynamic>> messages;
+
+  const ChatLoading({required this.messages});
+
+  @override
+  List<Object?> get props => [messages];
+}
+
+class ChatError extends ChatState {
+  final List<Map<String, dynamic>> messages;
+  final String error;
+
+  const ChatError({required this.messages, required this.error});
+
+  @override
+  List<Object?> get props => [messages, error];
+}
