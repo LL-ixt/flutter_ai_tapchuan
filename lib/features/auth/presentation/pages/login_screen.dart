@@ -1,5 +1,7 @@
 // This file is being moved to: c:\Users\User\Desktop\UD đa nền tảng\flutter_ai_tapchuan\lib\features\auth\presentation\pages\login_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/signup_screen.dart';
+import 'package:flutter_ai_tapchuan/features/main/presentation/pages/main_screen.dart';
 import 'package:flutter_ai_tapchuan/services/api_service.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
@@ -32,12 +34,26 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result['code'] == '1000') {
         String token = result['data']['token'];
         debugPrint("Token nhận được: $token"); // Debug token
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi: ${result['message']}')),
         );
       }
     }
+  }
+
+  Future<void> _handleSignup() async {
+    // Chuyển sang trang signup
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -153,7 +169,49 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        
+
+                        const SizedBox(height: 25),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _handleSignup,
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              // 1. Màu chữ mặc định là màu xanh của Facebook
+                              foregroundColor: AppColors.primaryBlue, 
+                              
+                              // 2. Định dạng viền (Border) màu xanh dương, bo góc
+                              side: const BorderSide(
+                                color: AppColors.primaryBlue, 
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25), // Bo góc nhẹ theo hình
+                              ),
+                            ).copyWith(
+                              // 3. Xử lý hiệu ứng đổi màu nền dựa trên trạng thái (State)
+                              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(WidgetState.pressed)) {
+                                  // Khi ấn vào: Nền chuyển thành màu xám nhạt như yêu cầu
+                                  return const Color(0xffe4e6eb); 
+                                }
+                                // Trạng thái bình thường: Nền màu trắng tinh
+                                return Colors.white; 
+                              }),
+                              
+                              textStyle: WidgetStateProperty.all(
+                                AppTextStyles.buttonText.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold, // Chữ đậm theo UI hình ảnh
+                                ),
+                              ),
+                            ),
+                            child: const Text("Tạo tài khoản mới"),
+                          ),
+                        ),
+
                         // ... Các phần còn lại (Quên mật khẩu, Tạo tài khoản, Thoát) giữ nguyên
                         // Hãy đảm bảo các phần này cũng nằm trong khối Column này
                       ],

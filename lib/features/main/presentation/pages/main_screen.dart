@@ -4,6 +4,7 @@ import '../../../feed/presentation/pages/home_screen.dart';
 import '../../../course/presentation/pages/course_tab.dart';
 import '../../../notification/presentation/pages/notification_tab.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../main/presentation/pages/menu_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -20,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     const CourseTab(),
     const NotificationTab(),
     const ProfileScreen(),
-    const Center(child: Text('Trang Menu (Đang phát triển)')),
+    const MenuScreen(),
   ];
 
   void _onItemTapped(int index) {

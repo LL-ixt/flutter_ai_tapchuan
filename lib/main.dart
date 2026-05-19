@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/core/constants/color_constants.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/change_info_after_signup_screen.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
-import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
+//import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'features/main/presentation/pages/main_screen.dart';
+//import 'features/main/presentation/pages/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("=== Xây dựng MyApp ===");
     return MaterialApp(
       title: 'EduSocial AI',
       debugShowCheckedModeBanner: false,
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
           elevation: 0.5,
         ),
       ),
-      home: const MainScreen(),
+      home: const LoginScreen(),
     );
   }
 }

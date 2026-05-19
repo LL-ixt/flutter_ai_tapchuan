@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/verify_screen.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
 //import '../../../../core/utils/validators.dart';
@@ -45,7 +46,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('1000 | OK: Đăng ký thành công!')),
         );
-        Navigator.pop(context);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => VerifyScreen(phoneNumber: _phoneController.text)),
+          (route) => false,
+        );
       } else if (result['code'] == '9996') {
         // TEST CASE 2: Số điện thoại đã tồn tại 
         ScaffoldMessenger.of(context).showSnackBar(
