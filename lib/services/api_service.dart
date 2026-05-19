@@ -31,7 +31,7 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> signup(String phone, String password, String role) async {
-    print("=== APIService.signup called with phone: $phone, role: $role ==="); // Debug log
+    //print("=== APIService.signup called with phone: $phone, role: $role ==="); // Debug log
     final url = Uri.parse('$baseUrl/signup');
     try {
       final response = await http.post(
@@ -51,6 +51,26 @@ class ApiService {
         return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
       }
     } 
+    catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> logout(String token) async {
+    final url = Uri.parse('$baseUrl/logout');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token
+        }
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    }
     catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }

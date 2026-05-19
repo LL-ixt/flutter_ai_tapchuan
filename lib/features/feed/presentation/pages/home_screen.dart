@@ -45,9 +45,12 @@ class _HomeView extends StatelessWidget {
             floating: true,
             actions: [
               _buildAppBarIcon(Icons.search),
-              const SizedBox(width: 8.0),
+              const SizedBox(width: 12.0),
               _buildAppBarIcon(Icons.messenger_outline), // Tương đương Messenger
-              const SizedBox(width: 16.0),
+              const SizedBox(width: 12.0),
+              // _buildAppBarIcon(Icons.menu),
+              _buildLogoutMenu(context), // Menu Đăng xuất
+              const SizedBox(width: 12.0),
             ],
           ),
 
@@ -145,6 +148,37 @@ class _HomeView extends StatelessWidget {
     );
   }
 
+  // Widget xử lý menu Đăng xuất
+  Widget _buildLogoutMenu(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      decoration: const BoxDecoration(
+        color: AppColors.scaffoldBackground,
+        shape: BoxShape.circle,
+      ),
+      child: PopupMenuButton<String>(
+        icon: const Icon(Icons.menu, color: AppColors.textPrimary, size: 22),
+        onSelected: (value) {
+          if (value == 'logout') {
+            //_handleLogout(context);
+          }
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        itemBuilder: (context) => [
+          const PopupMenuItem<String>(
+            value: 'logout',
+            child: Row(
+              children: [
+                Icon(Icons.exit_to_app, color: AppColors.errorRed),
+                SizedBox(width: 10),
+                Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   // Nút tròn trên AppBar
   Widget _buildAppBarIcon(IconData icon) {
     return Container(

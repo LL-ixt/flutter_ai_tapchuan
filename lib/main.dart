@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/core/constants/color_constants.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-//import 'features/feed/presentation/pages/home_screen.dart';
+import 'features/feed/presentation/pages/home_screen.dart';
 import 'features/auth/presentation/pages/signup_screen.dart';
 void main() {
   runApp(const MyApp());
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           elevation: 0.5,
         ),
       ),
-      home: const LoginScreen(),
+      home: const HomeScreen(),
     );
   }
 }
