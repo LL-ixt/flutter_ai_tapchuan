@@ -45,7 +45,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ServerException(baseResponse.message);
       }
     } on DioException catch (e) {
-      throw ServerException('Lỗi kết nối mạng: ${e.message}');
+      final errorMsg = e.message ?? e.error?.toString() ?? "Lỗi CORS hoặc không có mạng";
+      throw ServerException('Lỗi kết nối mạng: $errorMsg');
     }
   }
 
@@ -79,7 +80,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ServerException(baseResponse.message);
       }
     } on DioException catch (e) {
-      throw ServerException('Lỗi kết nối mạng: ${e.message}');
+      final errorMsg = e.message ?? e.error?.toString() ?? "Lỗi CORS hoặc không có mạng";
+      throw ServerException('Lỗi kết nối mạng: $errorMsg');
     }
   }
 }

@@ -5,6 +5,7 @@ import '../../../../core/constants/text_style_constants.dart';
 import '../../../main/presentation/pages/main_screen.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -161,6 +162,71 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () {},
+                              child: const Text(
+                                "Quên mật khẩu?",
+                                style: TextStyle(
+                                  color: AppColors.primaryBlue,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(color: Colors.grey[400]),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  child: Text(
+                                    "HOẶC",
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(color: Colors.grey[400]),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignupScreen(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(
+                                    0xFF42B72A,
+                                  ), // Màu xanh lá Facebook
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  "Tạo tài khoản mới",
+                                  style: AppTextStyles.buttonText.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
