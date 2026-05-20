@@ -1,43 +1,40 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'feed_state.dart';
+import '../../../../services/api_service.dart';
 
 class FeedCubit extends Cubit<FeedState> {
   FeedCubit() : super(FeedInitial());
 
   void fetchPosts() async {
     emit(FeedLoading());
-    
-    // Giả lập delay mạng 1.5 giây để thấy được CircularProgressIndicator
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    // Mock 5 bài viết theo format của API Contract
-    final List<Map<String, dynamic>> mockPosts = List.generate(5, (index) {
-      return {
-        "id": "post_$index",
-        "author": {
-          "id": "user_$index",
-          "username": "Học viên $index",
-          "avatar": "https://i.pravatar.cc/150?u=user_$index"
-        },
-        "described": "Đây là bài tập phần ${index + 1} của mình. Mọi người xem thử và góp ý giúp mình nhé!",
-        "created_at": "${index + 1} giờ trước",
-        "like": "${(index + 1) * 15}",
-        "comment": "${(index + 1) * 4}",
-        "isLiked": false, // Trường trạng thái Like ở local
-      };
-    });
-
-    emit(FeedLoaded(mockPosts));
+    try {
+      final result = await ApiService.getListPosts("0", "10");
+      if (result['code'] == '1000' && result['data'] != null) {
+        final List<dynamic> rawPosts = result['data']['posts'] ?? [];
+        final List<Map<String, dynamic>> posts = rawPosts
+            .map((e) => e as Map<String, dynamic>)
+            .toList();
+        emit(FeedLoaded(posts));
+      } else {
+        emit(FeedError(result['message'] ?? 'Lỗi tải danh sách bài viết'));
+      }
+    } catch (e) {
+      emit(FeedError('Lỗi kết nối: $e'));
+    }
   }
 
-  void toggleLike(String postId) {
+  void toggleLike(String postId) async {
     if (state is FeedLoaded) {
       final currentState = state as FeedLoaded;
       final updatedPosts = currentState.posts.map((post) {
-        if (post['id'] == postId) {
-          final bool currentlyLiked = post['isLiked'] ?? false;
-          int currentLikeCount = int.tryParse(post['like'].toString()) ?? 0;
-          
+        if (post['id']?.toString() == postId) {
+          final bool currentlyLiked =
+              post['is_liked'] == '1' ||
+              post['is_liked'] == true ||
+              post['isLiked'] == true;
+          int currentLikeCount =
+              int.tryParse(post['like']?.toString() ?? '0') ?? 0;
+
           if (!currentlyLiked) {
             currentLikeCount++;
           } else {
@@ -47,6 +44,7 @@ class FeedCubit extends Cubit<FeedState> {
 
           return {
             ...post,
+            'is_liked': !currentlyLiked, // Cập nhật local
             'isLiked': !currentlyLiked,
             'like': currentLikeCount.toString(),
           };
@@ -55,13 +53,20 @@ class FeedCubit extends Cubit<FeedState> {
       }).toList();
 
       emit(FeedLoaded(updatedPosts));
+
+      // Gọi API ngầm ở background
+      final token = ApiService.currentToken ?? "";
+      if (token.isNotEmpty) {
+        await ApiService.like(token, postId);
+      }
     }
   }
 
   void addNewPost(Map<String, dynamic> newPost) {
     if (state is FeedLoaded) {
       final currentState = state as FeedLoaded;
-      final updatedPosts = List<Map<String, dynamic>>.from(currentState.posts)..insert(0, newPost);
+      final updatedPosts = List<Map<String, dynamic>>.from(currentState.posts)
+        ..insert(0, newPost);
       emit(FeedLoaded(updatedPosts));
     }
   }

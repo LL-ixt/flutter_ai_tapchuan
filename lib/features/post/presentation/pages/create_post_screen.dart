@@ -27,15 +27,16 @@ class _CreatePostView extends StatelessWidget {
     return BlocConsumer<PostCubit, PostState>(
       listener: (context, state) {
         if (state is PostSuccess) {
-          context.read<FeedCubit>().addNewPost(state.newPost);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đăng bài thành công!')),
-          );
+          // Gọi API lấy lại danh sách bài mới nhất từ server thay vì chèn bài ảo
+          context.read<FeedCubit>().fetchPosts();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Đăng bài thành công!')));
           Navigator.pop(context);
         } else if (state is PostError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
@@ -58,10 +59,13 @@ class _CreatePostView extends StatelessWidget {
             centerTitle: true,
             actions: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 child: ElevatedButton(
-                  onPressed: (canSubmit && !isLoading) 
-                      ? () => context.read<PostCubit>().submitPost() 
+                  onPressed: (canSubmit && !isLoading)
+                      ? () => context.read<PostCubit>().submitPost()
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
@@ -73,12 +77,19 @@ class _CreatePostView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  child: isLoading 
+                  child: isLoading
                       ? const SizedBox(
-                          width: 16, 
-                          height: 16, 
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Đăng', style: TextStyle(fontWeight: FontWeight.bold)),
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Đăng',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
@@ -100,21 +111,35 @@ class _CreatePostView extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Nguyễn Tiến Thành', style: AppTextStyles.nameHeading),
+                        Text(
+                          'Nguyễn Tiến Thành',
+                          style: AppTextStyles.nameHeading,
+                        ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.public, size: 14, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.public,
+                                size: 14,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 4),
                               Text('Công khai', style: AppTextStyles.subtitle),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
                             ],
                           ),
                         ),
@@ -123,20 +148,24 @@ class _CreatePostView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Hàng 2: TextField
                 Expanded(
                   child: TextField(
-                    onChanged: (text) => context.read<PostCubit>().updateText(text),
+                    onChanged: (text) =>
+                        context.read<PostCubit>().updateText(text),
                     maxLines: null,
                     decoration: InputDecoration(
                       hintText: 'Bạn đang nghĩ gì?',
-                      hintStyle: AppTextStyles.heading1.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.normal),
+                      hintStyle: AppTextStyles.heading1.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.normal,
+                      ),
                       border: InputBorder.none,
                     ),
                   ),
                 ),
-                
+
                 // Hàng 3: Chọn Video
                 if (state is PostInitial)
                   Row(
@@ -146,8 +175,10 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           url: state.leftVideoUrl,
                           label: 'Chọn Video Trái',
-                          onTap: () => context.read<PostCubit>().pickLeftVideo(),
-                          onRemove: () => context.read<PostCubit>().removeLeftVideo(),
+                          onTap: () =>
+                              context.read<PostCubit>().pickLeftVideo(),
+                          onRemove: () =>
+                              context.read<PostCubit>().removeLeftVideo(),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -156,8 +187,10 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           url: state.rightVideoUrl,
                           label: 'Chọn Video Phải',
-                          onTap: () => context.read<PostCubit>().pickRightVideo(),
-                          onRemove: () => context.read<PostCubit>().removeRightVideo(),
+                          onTap: () =>
+                              context.read<PostCubit>().pickRightVideo(),
+                          onRemove: () =>
+                              context.read<PostCubit>().removeRightVideo(),
                         ),
                       ),
                     ],
@@ -199,7 +232,11 @@ class _CreatePostView extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
             Positioned(
               top: 8,
@@ -233,9 +270,18 @@ class _CreatePostView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.video_library, color: AppColors.primaryIconAction, size: 40),
+            const Icon(
+              Icons.video_library,
+              color: AppColors.primaryIconAction,
+              size: 40,
+            ),
             const SizedBox(height: 8),
-            Text(label, style: AppTextStyles.buttonText.copyWith(color: AppColors.primaryIconAction)),
+            Text(
+              label,
+              style: AppTextStyles.buttonText.copyWith(
+                color: AppColors.primaryIconAction,
+              ),
+            ),
           ],
         ),
       ),

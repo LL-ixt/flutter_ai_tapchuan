@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (result['code'] == '1000') {
         String token = result['data']['token'];
+        ApiService.currentToken = token; // Lưu token vào toàn cục
         debugPrint("Token nhận được: $token"); // Debug token
         Navigator.pushAndRemoveUntil(
           context,

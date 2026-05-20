@@ -31,7 +31,12 @@ class _ProfileView extends StatelessWidget {
           if (state is ProfileLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ProfileError) {
-            return Center(child: Text(state.message, style: const TextStyle(color: AppColors.errorRed)));
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(color: AppColors.errorRed),
+              ),
+            );
           } else if (state is ProfileLoaded) {
             final user = state.userProfile;
             return CustomScrollView(
@@ -61,12 +66,15 @@ class _ProfileView extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-     actions: [
+      actions: [
         IconButton(
           icon: const Icon(Icons.search, color: AppColors.textPrimary),
           onPressed: () {
             // Lệnh phóng sang trang Tìm Kiếm
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SearchPage()),
+            );
           },
         ),
       ],
@@ -105,7 +113,10 @@ class _ProfileView extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surfaceWhite, width: 4),
+                      border: Border.all(
+                        color: AppColors.surfaceWhite,
+                        width: 4,
+                      ),
                     ),
                     child: AvatarWidget(
                       imageUrl: user.avatarUrl,
@@ -145,20 +156,45 @@ class _ProfileView extends StatelessWidget {
                   // Details (Location, Link)
                   Row(
                     children: [
-                      const Icon(Icons.home, color: AppColors.textSecondary, size: 20),
+                      const Icon(
+                        Icons.home,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
-                      Text('Sống tại ', style: const TextStyle(color: AppColors.textSecondary, fontSize: 15)),
-                      Text(user.location, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Sống tại ',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        user.location,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.link, color: AppColors.textSecondary, size: 20),
+                      const Icon(
+                        Icons.link,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         user.link,
-                        style: const TextStyle(color: AppColors.primaryBlue, fontSize: 15, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          color: AppColors.primaryBlue,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -169,7 +205,9 @@ class _ProfileView extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.dividerBorder.withValues(alpha: 0.3),
+                        backgroundColor: AppColors.dividerBorder.withValues(
+                          alpha: 0.3,
+                        ),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -196,7 +234,10 @@ class _ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildPostsList(BuildContext context, List<Map<String, dynamic>> posts) {
+  Widget _buildPostsList(
+    BuildContext context,
+    List<Map<String, dynamic>> posts,
+  ) {
     if (posts.isEmpty) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -207,19 +248,19 @@ class _ProfileView extends StatelessWidget {
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final post = posts[index];
-          return PostCard(
-            postData: post,
-            isLiked: post['isLiked'] ?? false,
-            onLikeToggle: () {
-              context.read<ProfileCubit>().toggleLikePost(post['id']);
-            },
-          );
-        },
-        childCount: posts.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final post = posts[index];
+        return PostCard(
+          postData: post,
+          isLiked: post['isLiked'] ?? false,
+          onLikeToggle: () {
+            final postId = post['id']?.toString() ?? '';
+            if (postId.isNotEmpty) {
+              context.read<ProfileCubit>().toggleLikePost(postId);
+            }
+          },
+        );
+      }, childCount: posts.length),
     );
   }
 }

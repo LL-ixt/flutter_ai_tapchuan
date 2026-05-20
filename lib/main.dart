@@ -19,7 +19,8 @@ class MyApp extends StatelessWidget {
       title: 'EduSocial AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
+        // Tạm thời tắt Google Fonts để không bị lỗi Failed to fetch font khi debug trên Web
+        // textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
         scaffoldBackgroundColor: AppColors.scaffoldBackground,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.surfaceWhite,
