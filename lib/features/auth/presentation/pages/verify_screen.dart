@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/change_info_after_signup_screen.dart';
 import '../../../../core/constants/color_constants.dart';
-import '../../../../core/constants/text_style_constants.dart';
-import '../../../../core/widgets/submit_button.dart';
 import '../../../../services/api_service.dart';
-import 'login_screen.dart';
 
 class VerifyScreen extends StatefulWidget {
   final String phoneNumber;

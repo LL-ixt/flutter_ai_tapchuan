@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_ai_tapchuan/core/utils/device_utils.dart';
 
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
