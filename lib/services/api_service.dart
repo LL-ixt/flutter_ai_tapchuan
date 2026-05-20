@@ -66,6 +66,8 @@ class ApiService {
           'token': token
         }
       );
+      print("status code logout: ${response.statusCode}"); // Debug log
+      print("=== API Logout Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
