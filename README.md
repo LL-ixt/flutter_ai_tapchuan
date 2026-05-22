@@ -1,5 +1,3 @@
-
-```markdown
 # 🎓 EduSocial AI: Multi-Agent E-Learning & Social Platform
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
@@ -14,7 +12,7 @@
 
 ## 🌟 Core Problem & AI Solution
 
-Traditional online physical education lacks real-time, accurate feedback. Instructors are overwhelmed by manually reviewing hundreds of student videos. 
+Traditional online physical education lacks real-time, accurate feedback. Instructors are overwhelmed by manually reviewing hundreds of student videos.
 
 **Our Solution:** We implemented a Multi-Agent AI System to fully automate the grading and feedback process.
 
@@ -111,7 +109,7 @@ lib/
 - [ ] Real-time Socket.IO Integration for Chat
 - [ ] Connect Flutter Client to Multi-Agent Python Backend
 
----  
+---
 **Contact:** dinhhoang1712005@gmail.com
 ```
 
