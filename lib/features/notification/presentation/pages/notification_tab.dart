@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
@@ -8,10 +9,19 @@ import '../widgets/notification_tile.dart';
 class NotificationTab extends StatelessWidget {
   const NotificationTab({super.key});
 
+  String? _currentToken(BuildContext context) {
+    try {
+      return context.read<AuthCubit>().state.token;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => NotificationCubit()..loadNotifications(),
+      create: (context) =>
+          NotificationCubit(token: _currentToken(context))..loadNotifications(),
       child: Scaffold(
         backgroundColor: AppColors.surfaceWhite,
         appBar: AppBar(
@@ -31,7 +41,10 @@ class NotificationTab extends StatelessWidget {
               icon: const Icon(Icons.search, color: AppColors.textPrimary),
               onPressed: () {
                 // Lệnh phóng sang trang Tìm Kiếm
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchPage()),
+                );
               },
             ),
           ],
@@ -49,7 +62,7 @@ class NotificationTab extends StatelessWidget {
               );
             } else if (state is NotificationLoaded) {
               final notifications = state.notifications;
-              
+
               if (notifications.isEmpty) {
                 return const Center(
                   child: Text(
@@ -61,7 +74,7 @@ class NotificationTab extends StatelessWidget {
 
               return RefreshIndicator(
                 onRefresh: () async {
-                  context.read<NotificationCubit>().loadNotifications();
+                  await context.read<NotificationCubit>().loadNotifications();
                 },
                 child: ListView.builder(
                   itemCount: notifications.length,
@@ -69,10 +82,10 @@ class NotificationTab extends StatelessWidget {
                     final notification = notifications[index];
                     return NotificationTile(
                       notification: notification,
-                      onTap: () {
-                        context
-                            .read<NotificationCubit>()
-                            .markAsRead(notification.id);
+                      onTap: () async {
+                        await context.read<NotificationCubit>().markAsRead(
+                          notification.id,
+                        );
                       },
                     );
                   },
