@@ -1,15 +1,15 @@
 class GetListPostsRequest {
   final String? token;
-  final String categoryId;
-  final String lastId;
+  final String? categoryId;
+  final String? lastId;
   final String? index;
   final String? count;
   final String userId;
 
   GetListPostsRequest({
     this.token,
-    required this.categoryId,
-    required this.lastId,
+    this.categoryId,
+    this.lastId,
     this.index,
     this.count,
     required this.userId,
@@ -18,8 +18,10 @@ class GetListPostsRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      'category_id': categoryId,
-      'last_id': lastId,
+      if (categoryId != null && categoryId != '0' && categoryId!.isNotEmpty)
+        'category_id': categoryId!,
+      if (lastId != null && lastId != '0' && lastId!.isNotEmpty)
+        'last_id': lastId!,
       if (index != null) 'index': index!,
       if (count != null) 'count': count!,
       'user_id': userId,

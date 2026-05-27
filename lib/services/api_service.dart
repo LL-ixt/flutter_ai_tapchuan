@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/add_post_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/get_post_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/edit_post_models.dart';
@@ -9,8 +10,18 @@ import 'package:flutter_ai_tapchuan/features/post/data/models/report_post_models
 import 'package:flutter_ai_tapchuan/features/post/data/models/comment_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/like_models.dart';
 import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_models.dart';
+
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
+
+  static MediaType _getMediaType(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return MediaType('image', 'jpeg');
+    if (lower.endsWith('.mp4')) return MediaType('video', 'mp4');
+    return MediaType('application', 'octet-stream');
+  }
+
   static Future<Map<String, dynamic>> login(String phone, String password) async {
     final url = Uri.parse('$baseUrl/login');
     //print("=== APIService.login called with phone: $phone ==="); // Debug log
@@ -140,20 +151,24 @@ class ApiService {
       if (request.leftVideo != null) {
         req.files.add(await http.MultipartFile.fromPath('left_video', request.leftVideo!.path));
       } else if (request.leftVideoBytes != null) {
+        final filename = request.leftVideoName ?? 'left_video.mp4';
         req.files.add(http.MultipartFile.fromBytes(
           'left_video',
           request.leftVideoBytes!,
-          filename: request.leftVideoName ?? 'left_video.mp4',
+          filename: filename,
+          contentType: _getMediaType(filename),
         ));
       }
 
       if (request.rightVideo != null) {
         req.files.add(await http.MultipartFile.fromPath('right_video', request.rightVideo!.path));
       } else if (request.rightVideoBytes != null) {
+        final filename = request.rightVideoName ?? 'right_video.mp4';
         req.files.add(http.MultipartFile.fromBytes(
           'right_video',
           request.rightVideoBytes!,
-          filename: request.rightVideoName ?? 'right_video.mp4',
+          filename: filename,
+          contentType: _getMediaType(filename),
         ));
       }
 
@@ -165,6 +180,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return AddPostResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        return AddPostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
       } else {
         return AddPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
       }
@@ -202,20 +219,24 @@ class ApiService {
       if (request.leftVideo != null) {
         req.files.add(await http.MultipartFile.fromPath('left_video', request.leftVideo!.path));
       } else if (request.leftVideoBytes != null) {
+        final filename = request.leftVideoName ?? 'left_video.mp4';
         req.files.add(http.MultipartFile.fromBytes(
           'left_video',
           request.leftVideoBytes!,
-          filename: request.leftVideoName ?? 'left_video.mp4',
+          filename: filename,
+          contentType: _getMediaType(filename),
         ));
       }
 
       if (request.rightVideo != null) {
         req.files.add(await http.MultipartFile.fromPath('right_video', request.rightVideo!.path));
       } else if (request.rightVideoBytes != null) {
+        final filename = request.rightVideoName ?? 'right_video.mp4';
         req.files.add(http.MultipartFile.fromBytes(
           'right_video',
           request.rightVideoBytes!,
-          filename: request.rightVideoName ?? 'right_video.mp4',
+          filename: filename,
+          contentType: _getMediaType(filename),
         ));
       }
 
@@ -227,6 +248,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return EditPostResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        return EditPostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
       } else {
         return EditPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
       }
@@ -247,6 +270,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return DeletePostResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        return DeletePostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
       } else {
         return DeletePostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
       }
@@ -327,6 +352,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return LikeResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        return LikeResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
       } else {
         return LikeResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
       }

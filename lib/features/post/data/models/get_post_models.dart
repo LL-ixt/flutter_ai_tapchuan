@@ -1,19 +1,19 @@
 class GetPostRequest {
   final String? token;
   final String? id;
-  final String userId;
+  final String? userId;
 
   GetPostRequest({
     this.token,
     this.id,
-    required this.userId,
+    this.userId,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
       if (id != null) 'id': id!,
-      'user_id': userId,
+      if (userId != null && userId!.isNotEmpty) 'user_id': userId!,
     };
   }
 }

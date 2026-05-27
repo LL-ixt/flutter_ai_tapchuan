@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_ai_tapchuan/services/api_service.dart';
 import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/like_models.dart';
@@ -13,7 +14,7 @@ void main() async {
   print("=== BAT DAU CHAY THU NGHIEM TICH HOP API ===");
 
   // 1. Thử đăng nhập bằng một tài khoản để lấy token
-  final phone = "0359882536";
+  final phone = "0300000000";
   final password = "123456";
   print("\n1. Đang gọi API login với phone: $phone...");
   final loginResult = await ApiService.login(phone, password);
@@ -33,6 +34,7 @@ void main() async {
 
   // 2. Kiểm thử lấy danh sách bài viết
   print("\n2. Đang gọi API getListPosts...");
+  String? firstPostId;
   try {
     final req = GetListPostsRequest(
       token: token,
@@ -49,26 +51,34 @@ void main() async {
       print(
         "getListPosts - Lấy được ${response.posts!.length} bài viết từ Server.",
       );
+      if (response.posts!.isNotEmpty) {
+        final firstPost = response.posts!.first;
+        if (firstPost is Map) {
+          firstPostId = firstPost['post_id']?.toString() ?? firstPost['id']?.toString();
+        }
+      }
     }
   } catch (e) {
     print("getListPosts - Lỗi: $e");
   }
 
-  // 3. Kiểm thử Đăng bài viết (addPost) bằng dữ liệu mock bytes
+  // 3. Kiểm thử Đăng bài viết (addPost) bằng dữ liệu video mp4 chuẩn
   print("\n3. Đang gọi API addPost (Đăng bài mới)...");
+  final videoBytes = File('test/classroom.mp4').readAsBytesSync();
+
   String? createdPostId;
   try {
     final addReq = AddPostRequest(
       token: token,
-      leftVideoBytes: utf8.encode('dummy left video data'),
+      leftVideoBytes: videoBytes,
       leftVideoName: 'test_left_video.mp4',
-      rightVideoBytes: utf8.encode('dummy right video data'),
+      rightVideoBytes: videoBytes,
       rightVideoName: 'test_right_video.mp4',
-      courseId: 'course_test_123',
-      exerciseId: 'exercise_test_123',
+      courseId: 'course_123',
+      exerciseId: 'exercise_123',
       described: 'Bài đăng thử nghiệm tự động tích hợp API',
-      deviceSlave: 'slave_device_test',
-      deviceMaster: 'master_device_test',
+      deviceSlave: 'slave_123',
+      deviceMaster: 'master_123',
     );
     final addRes = await ApiService.addPost(addReq);
     print("addPost - Response code: ${addRes.code}");
@@ -79,14 +89,14 @@ void main() async {
     print("addPost - Lỗi: $e");
   }
 
-  // Sử dụng ID vừa tạo, hoặc dùng ID bài viết mock nếu addPost không tạo được ID
-  final testPostId = createdPostId ?? "post_test_dummy_id";
+  // Sử dụng ID vừa tạo, hoặc dùng ID bài viết thật từ list, hoặc dùng ID bài viết mock nếu không có gì
+  final testPostId = createdPostId ?? firstPostId ?? "post_test_dummy_id";
   print("\nSử dụng Post ID: $testPostId để test các API chi tiết.");
 
   // 4. Kiểm thử lấy chi tiết bài viết (getPost)
   print("\n4. Đang gọi API getPost...");
   try {
-    final getReq = GetPostRequest(token: token, id: testPostId, userId: userId);
+    final getReq = GetPostRequest(token: token, id: testPostId);
     final getRes = await ApiService.getPost(getReq);
     print("getPost - Response code: ${getRes.code}");
     print("getPost - Response message: ${getRes.message}");
@@ -101,7 +111,7 @@ void main() async {
       token: token,
       id: testPostId,
       described: 'Nội dung bài viết đã được cập nhật qua API',
-      leftVideoBytes: utf8.encode('updated left video data'),
+      leftVideoBytes: videoBytes,
       leftVideoName: 'updated_left.mp4',
     );
     final editRes = await ApiService.editPost(editReq);

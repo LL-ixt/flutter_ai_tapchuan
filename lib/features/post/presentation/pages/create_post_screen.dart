@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
@@ -155,7 +156,7 @@ class _CreatePostView extends StatelessWidget {
                       Expanded(
                         child: _buildVideoSelector(
                           context: context,
-                          url: state.leftVideoUrl,
+                          file: state.leftVideoFile,
                           label: 'Chọn Video Trái',
                           onTap: () => context.read<PostCubit>().pickLeftVideo(),
                           onRemove: () => context.read<PostCubit>().removeLeftVideo(),
@@ -165,7 +166,7 @@ class _CreatePostView extends StatelessWidget {
                       Expanded(
                         child: _buildVideoSelector(
                           context: context,
-                          url: state.rightVideoUrl,
+                          file: state.rightVideoFile,
                           label: 'Chọn Video Phải',
                           onTap: () => context.read<PostCubit>().pickRightVideo(),
                           onRemove: () => context.read<PostCubit>().removeRightVideo(),
@@ -183,38 +184,48 @@ class _CreatePostView extends StatelessWidget {
 
   Widget _buildVideoSelector({
     required BuildContext context,
-    required String? url,
+    required PlatformFile? file,
     required String label,
     required VoidCallback onTap,
     required VoidCallback onRemove,
   }) {
-    if (url != null) {
+    if (file != null) {
+      final sizeMb = (file.size / (1024 * 1024)).toStringAsFixed(2);
       return Container(
         height: 200,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: Colors.black,
+          color: Colors.grey[100],
+          border: Border.all(color: AppColors.dividerBorder),
         ),
         child: Stack(
-          alignment: Alignment.center,
           children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(url, fit: BoxFit.cover),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Center(
+                  child: Icon(Icons.video_library, color: AppColors.primaryBlue, size: 48),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  file.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$sizeMb MB',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                ),
+              ],
             ),
             Positioned(
-              top: 8,
-              right: 8,
+              top: 0,
+              right: 0,
               child: GestureDetector(
                 onTap: onRemove,
                 child: Container(

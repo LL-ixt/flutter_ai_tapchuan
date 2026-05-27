@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'post_state.dart';
 import '../../../../services/api_service.dart';
 import '../../data/models/add_post_models.dart';
+import '../../../../core/constants/test_video_bytes.dart';
 
 class PostCubit extends Cubit<PostState> {
   PostCubit() : super(const PostInitial());
@@ -15,9 +17,16 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  void pickLeftVideo() {
+  Future<void> pickLeftVideo() async {
     if (state is PostInitial) {
-      emit((state as PostInitial).copyWith(leftVideoUrl: 'https://picsum.photos/300/400?1'));
+      try {
+        final result = await FilePicker.platform.pickFiles(type: FileType.video);
+        if (result != null && result.files.isNotEmpty) {
+          emit((state as PostInitial).copyWith(leftVideoFile: result.files.first));
+        }
+      } catch (e) {
+        emit(PostError('Lỗi chọn file: $e'));
+      }
     }
   }
 
@@ -27,9 +36,16 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  void pickRightVideo() {
+  Future<void> pickRightVideo() async {
     if (state is PostInitial) {
-      emit((state as PostInitial).copyWith(rightVideoUrl: 'https://picsum.photos/300/400?2'));
+      try {
+        final result = await FilePicker.platform.pickFiles(type: FileType.video);
+        if (result != null && result.files.isNotEmpty) {
+          emit((state as PostInitial).copyWith(rightVideoFile: result.files.first));
+        }
+      } catch (e) {
+        emit(PostError('Lỗi chọn file: $e'));
+      }
     }
   }
 
@@ -53,14 +69,19 @@ class PostCubit extends Cubit<PostState> {
       emit(PostLoading());
 
       try {
+        final leftBytes = currentState.leftVideoFile?.bytes ?? currentState.rightVideoFile?.bytes;
+        final leftName = currentState.leftVideoFile?.name ?? currentState.rightVideoFile?.name;
+        final rightBytes = currentState.rightVideoFile?.bytes ?? currentState.leftVideoFile?.bytes;
+        final rightName = currentState.rightVideoFile?.name ?? currentState.leftVideoFile?.name;
+
         AddPostRequest request;
         if (kIsWeb) {
           request = AddPostRequest(
             token: token,
-            leftVideoBytes: utf8.encode('dummy left video data'),
-            leftVideoName: 'dummy_left.mp4',
-            rightVideoBytes: utf8.encode('dummy right video data'),
-            rightVideoName: 'dummy_right.mp4',
+            leftVideoBytes: leftBytes,
+            leftVideoName: leftName,
+            rightVideoBytes: rightBytes,
+            rightVideoName: rightName,
             courseId: courseId ?? 'course_123',
             exerciseId: exerciseId ?? 'exercise_123',
             described: currentState.text,
@@ -68,20 +89,13 @@ class PostCubit extends Cubit<PostState> {
             deviceMaster: deviceMaster ?? 'device_master_123',
           );
         } else {
-          final tempDir = Directory.systemTemp;
-          final leftFile = File('${tempDir.path}/dummy_left.mp4');
-          if (!await leftFile.exists()) {
-            await leftFile.writeAsString('dummy left video data');
-          }
-          final rightFile = File('${tempDir.path}/dummy_right.mp4');
-          if (!await rightFile.exists()) {
-            await rightFile.writeAsString('dummy right video data');
-          }
+          final leftPath = currentState.leftVideoFile?.path ?? currentState.rightVideoFile?.path;
+          final rightPath = currentState.rightVideoFile?.path ?? currentState.leftVideoFile?.path;
 
           request = AddPostRequest(
             token: token,
-            leftVideo: leftFile,
-            rightVideo: rightFile,
+            leftVideo: leftPath != null ? File(leftPath) : null,
+            rightVideo: rightPath != null ? File(rightPath) : null,
             courseId: courseId ?? 'course_123',
             exerciseId: exerciseId ?? 'exercise_123',
             described: currentState.text,

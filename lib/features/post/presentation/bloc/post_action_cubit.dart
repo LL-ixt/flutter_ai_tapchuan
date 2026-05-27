@@ -12,7 +12,7 @@ class PostActionCubit extends Cubit<PostActionState> {
   Future<void> fetchPostDetail({
     required String postId,
     required String token,
-    required String userId,
+    String? userId,
   }) async {
     emit(const PostActionState.loading());
     try {
