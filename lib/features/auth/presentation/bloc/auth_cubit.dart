@@ -18,8 +18,14 @@ class AuthCubit extends Cubit<AuthState> {
         String fetchedName = userData['username'] ?? "Không tên";
         String fetchedRole = userData['role'] ?? "HS";
         String fetchedToken = userData['token'];
+        String fetchedId = userData['id']?.toString() ?? userData['userId']?.toString() ?? 'user_current';
         // 2. Bắn trạng thái thành công kèm theo data thật
-        emit(AuthState.success(username: fetchedName, role: fetchedRole, token: fetchedToken));
+        emit(AuthState.success(
+          username: fetchedName,
+          role: fetchedRole,
+          token: fetchedToken,
+          userId: fetchedId,
+        ));
       } else {
         // Thất bại do sai mật khẩu, tài khoản chưa verify...
         emit(AuthState.failure(result['message'] ?? 'Đăng nhập thất bại'));

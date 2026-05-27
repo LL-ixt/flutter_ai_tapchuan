@@ -6,6 +6,8 @@ import '../../../../core/widgets/avatar_widget.dart';
 import 'package:flutter_ai_tapchuan/features/feed/presentation/bloc/feed_cubit.dart';
 import '../bloc/post_cubit.dart';
 import '../bloc/post_state.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import '../../../../core/utils/dialog_utils.dart';
 
 class CreatePostScreen extends StatelessWidget {
   const CreatePostScreen({super.key});
@@ -28,13 +30,19 @@ class _CreatePostView extends StatelessWidget {
       listener: (context, state) {
         if (state is PostSuccess) {
           context.read<FeedCubit>().addNewPost(state.newPost);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đăng bài thành công!')),
+          DialogUtils.showNotificationDialog(
+            context: context,
+            title: 'Thành công',
+            message: 'Đăng bài viết thành công!',
+            isSuccess: true,
+            onConfirm: () => Navigator.pop(context),
           );
-          Navigator.pop(context);
         } else if (state is PostError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
+          DialogUtils.showNotificationDialog(
+            context: context,
+            title: 'Lỗi đăng bài',
+            message: state.message,
+            isSuccess: false,
           );
         }
       },
@@ -61,7 +69,10 @@ class _CreatePostView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: ElevatedButton(
                   onPressed: (canSubmit && !isLoading) 
-                      ? () => context.read<PostCubit>().submitPost() 
+                      ? () {
+                          final token = context.read<AuthCubit>().state.token;
+                          context.read<PostCubit>().submitPost(token: token);
+                        }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,

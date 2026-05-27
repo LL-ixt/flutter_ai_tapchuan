@@ -6,6 +6,8 @@ import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/input_box.dart';
 import '../../../../core/widgets/submit_button.dart';
 import '../../../../services/api_service.dart';
+import '../../../../core/utils/dialog_utils.dart';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -23,8 +25,11 @@ class _SignupScreenState extends State<SignupScreen> {
   void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedRole.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vui lòng chọn loại người dùng (Học viên/Giáo viên)')),
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Cảnh báo',
+          message: 'Vui lòng chọn loại người dùng (Học viên/Giáo viên)',
+          isSuccess: false,
         );
         return;
       }
@@ -42,24 +47,32 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (result['code'] == '1000') {
-        // TEST CASE 1: Đăng ký thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('1000 | OK: Đăng ký thành công!')),
-        );
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => VerifyScreen(phoneNumber: _phoneController.text)),
-          (route) => false,
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Đăng ký thành công',
+          message: 'Đăng ký tài khoản thành công!',
+          isSuccess: true,
+          onConfirm: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => VerifyScreen(phoneNumber: _phoneController.text)),
+              (route) => false,
+            );
+          },
         );
       } else if (result['code'] == '9996') {
-        // TEST CASE 2: Số điện thoại đã tồn tại 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('9996 | User existed: Số điện thoại đã được đăng ký')),
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Đăng ký thất bại',
+          message: 'Số điện thoại đã được đăng ký trên hệ thống',
+          isSuccess: false,
         );
       } else {
-        // Các lỗi khác từ server
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: ${result['message']}')),
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Đăng ký thất bại',
+          message: 'Lỗi: ${result['message']}',
+          isSuccess: false,
         );
       }
     }

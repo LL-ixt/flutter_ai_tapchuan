@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/change_info_after_signup_screen.dart';
 import '../../../../core/constants/color_constants.dart';
+import '../../../../core/utils/dialog_utils.dart';
 //import '../../../../core/constants/text_style_constants.dart';
 //import '../../../../core/widgets/submit_button.dart';
 import '../../../../services/api_service.dart';
@@ -35,21 +36,26 @@ class _VerifyScreenState extends State<VerifyScreen> {
       if (!mounted) return;
 
       if (result['code'] == '1000') {
-        // Kịch bản thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Xác thực thành công! Vui lòng đăng nhập.')),
-        );
         String tokenAfterVerify = result['data']['token'];
-        // Đẩy người dùng về màn hình Đăng nhập và xóa hết stack trước đó
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => ChangeInfoAfterSignupScreen(token: tokenAfterVerify)),
-          (route) => false,
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Thành công',
+          message: 'Xác thực thành công! Vui lòng cập nhật hồ sơ.',
+          isSuccess: true,
+          onConfirm: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => ChangeInfoAfterSignupScreen(token: tokenAfterVerify)),
+              (route) => false,
+            );
+          },
         );
       } else {
-        // Hiển thị lỗi từ server trả về (Ví dụ mã sai, hết hạn...)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi (${result['code']}): ${result['message']}')),
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Xác thực thất bại',
+          message: 'Lỗi (${result['code']}): ${result['message']}',
+          isSuccess: false,
         );
       }
     }

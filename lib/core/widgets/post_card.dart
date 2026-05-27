@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/feed/presentation/bloc/feed_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/comment_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/comment_state.dart';
+import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_state.dart';
+import 'package:flutter_ai_tapchuan/features/post/data/models/edit_post_models.dart';
 import '../constants/color_constants.dart';
 import '../constants/text_style_constants.dart';
+import '../utils/dialog_utils.dart';
 import 'avatar_widget.dart';
 
 class PostCard extends StatelessWidget {
@@ -194,6 +203,7 @@ class PostCard extends StatelessWidget {
   }
 
   void _showOptionsBottomSheet(BuildContext context) {
+    final canEdit = postData['can_edit']?.toString() != '0'; // default true if null or not '0'
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -216,22 +226,32 @@ class PostCard extends StatelessWidget {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.edit, color: AppColors.primaryIconAction),
-                title: Text('Chỉnh sửa bài viết', style: AppTextStyles.bodyMain),
-                onTap: () => Navigator.pop(ctx),
+                leading: Icon(Icons.edit, color: canEdit ? AppColors.primaryIconAction : Colors.grey),
+                title: Text('Chỉnh sửa bài viết', style: AppTextStyles.bodyMain.copyWith(color: canEdit ? null : Colors.grey)),
+                onTap: canEdit
+                    ? () {
+                        Navigator.pop(ctx);
+                        _showEditPostDialog(context);
+                      }
+                    : null,
               ),
               ListTile(
-                leading: const Icon(Icons.delete, color: AppColors.errorRed),
-                title: Text('Xóa bài viết', style: AppTextStyles.bodyMain.copyWith(color: AppColors.errorRed)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showDeleteConfirmDialog(context);
-                },
+                leading: Icon(Icons.delete, color: canEdit ? AppColors.errorRed : Colors.grey),
+                title: Text('Xóa bài viết', style: AppTextStyles.bodyMain.copyWith(color: canEdit ? AppColors.errorRed : Colors.grey)),
+                onTap: canEdit
+                    ? () {
+                        Navigator.pop(ctx);
+                        _showDeleteConfirmDialog(context);
+                      }
+                    : null,
               ),
               ListTile(
                 leading: const Icon(Icons.report, color: AppColors.primaryIconAction),
                 title: Text('Báo cáo bài viết', style: AppTextStyles.bodyMain),
-                onTap: () => Navigator.pop(ctx),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showReportPostDialog(context);
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -242,39 +262,366 @@ class PostCard extends StatelessWidget {
   }
 
   void _showDeleteConfirmDialog(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final token = authState.token ?? '';
+    final postId = postData['id'] ?? '';
+
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text('Xóa bài viết', style: AppTextStyles.heading1),
-          content: Text('Bạn có chắc chắn muốn xóa bài viết này không?', style: AppTextStyles.bodyMain),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Hủy', style: AppTextStyles.buttonText.copyWith(color: AppColors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Đã xóa bài viết')),
+        return BlocProvider<PostActionCubit>(
+          create: (context) => PostActionCubit(),
+          child: BlocConsumer<PostActionCubit, PostActionState>(
+            listener: (dialogCtx, state) {
+              if (state.isSuccess && state.actionType == 'delete') {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thành công',
+                  message: 'Đã xóa bài viết thành công!',
+                  isSuccess: true,
+                  onConfirm: () {
+                    context.read<FeedCubit>().fetchPosts(token: token, userId: authState.userId);
+                    Navigator.pop(dialogCtx);
+                  },
                 );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorRed),
-              child: const Text('Xóa', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+              } else if (state.error != null) {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thất bại',
+                  message: 'Lỗi: ${state.error}',
+                  isSuccess: false,
+                );
+              }
+            },
+            builder: (dialogCtx, state) {
+              return AlertDialog(
+                title: Text('Xóa bài viết', style: AppTextStyles.heading1),
+                content: state.isLoading
+                    ? const SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : Text('Bạn có chắc chắn muốn xóa bài viết này không?', style: AppTextStyles.bodyMain),
+                actions: [
+                  TextButton(
+                    onPressed: state.isLoading ? null : () => Navigator.pop(dialogCtx),
+                    child: Text('Hủy', style: AppTextStyles.buttonText.copyWith(color: AppColors.textSecondary)),
+                  ),
+                  ElevatedButton(
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            dialogCtx.read<PostActionCubit>().deletePost(postId: postId, token: token);
+                          },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorRed),
+                    child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showReportPostDialog(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final token = authState.token ?? '';
+    final postId = postData['id'] ?? '';
+    final TextEditingController reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return BlocProvider<PostActionCubit>(
+          create: (context) => PostActionCubit(),
+          child: BlocConsumer<PostActionCubit, PostActionState>(
+            listener: (dialogCtx, state) {
+              if (state.isSuccess && state.actionType == 'report') {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thành công',
+                  message: 'Báo cáo bài viết thành công!',
+                  isSuccess: true,
+                  onConfirm: () {
+                    Navigator.pop(dialogCtx);
+                  },
+                );
+              } else if (state.error != null) {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thất bại',
+                  message: 'Lỗi: ${state.error}',
+                  isSuccess: false,
+                );
+              }
+            },
+            builder: (dialogCtx, state) {
+              return AlertDialog(
+                title: Text('Báo cáo bài viết', style: AppTextStyles.heading1),
+                content: state.isLoading
+                    ? const SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Nhập lý do báo cáo bài viết này:', style: AppTextStyles.bodyMain),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: reasonController,
+                            decoration: const InputDecoration(
+                              hintText: 'Lý do báo cáo...',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                actions: [
+                  TextButton(
+                    onPressed: state.isLoading ? null : () => Navigator.pop(dialogCtx),
+                    child: Text('Hủy', style: AppTextStyles.buttonText.copyWith(color: AppColors.textSecondary)),
+                  ),
+                  ElevatedButton(
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            final details = reasonController.text.trim();
+                            dialogCtx.read<PostActionCubit>().reportPost(
+                                  postId: postId,
+                                  token: token,
+                                  subject: 'Báo cáo nội dung',
+                                  details: details.isNotEmpty ? details : 'Không có chi tiết',
+                                );
+                          },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
+                    child: const Text('Gửi', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditPostDialog(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final token = authState.token ?? '';
+    final postId = postData['id'] ?? '';
+    final TextEditingController textController = TextEditingController(text: postData['described'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return BlocProvider<PostActionCubit>(
+          create: (context) => PostActionCubit(),
+          child: BlocConsumer<PostActionCubit, PostActionState>(
+            listener: (dialogCtx, state) {
+              if (state.isSuccess && state.actionType == 'edit') {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thành công',
+                  message: 'Chỉnh sửa bài viết thành công!',
+                  isSuccess: true,
+                  onConfirm: () {
+                    context.read<FeedCubit>().fetchPosts(token: token, userId: authState.userId);
+                    Navigator.pop(dialogCtx);
+                  },
+                );
+              } else if (state.error != null) {
+                DialogUtils.showNotificationDialog(
+                  context: context,
+                  title: 'Thất bại',
+                  message: 'Lỗi: ${state.error}',
+                  isSuccess: false,
+                );
+              }
+            },
+            builder: (dialogCtx, state) {
+              return AlertDialog(
+                title: Text('Chỉnh sửa bài viết', style: AppTextStyles.heading1),
+                content: state.isLoading
+                    ? const SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: textController,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                              hintText: 'Nội dung bài viết mới...',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                actions: [
+                  TextButton(
+                    onPressed: state.isLoading ? null : () => Navigator.pop(dialogCtx),
+                    child: Text('Hủy', style: AppTextStyles.buttonText.copyWith(color: AppColors.textSecondary)),
+                  ),
+                  ElevatedButton(
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            final described = textController.text.trim();
+                            if (described.isNotEmpty) {
+                              dialogCtx.read<PostActionCubit>().editPost(
+                                    request: EditPostRequest(
+                                      token: token,
+                                      id: postId,
+                                      described: described,
+                                    ),
+                                  );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
+                    child: const Text('Lưu', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
   }
 
   void _showCommentBottomSheet(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final token = authState.token ?? '';
+    final userId = authState.userId ?? 'u1';
+    final postId = postData['id'] ?? '';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        return BlocProvider<CommentCubit>(
+          create: (context) => CommentCubit(),
+          child: _CommentBottomSheet(
+            postId: postId,
+            token: token,
+            userId: userId,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4.0),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 4.0),
+            Text(
+              label,
+              style: AppTextStyles.buttonText.copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CommentBottomSheet extends StatefulWidget {
+  final String postId;
+  final String token;
+  final String userId;
+
+  const _CommentBottomSheet({
+    required this.postId,
+    required this.token,
+    required this.userId,
+  });
+
+  @override
+  State<_CommentBottomSheet> createState() => _CommentBottomSheetState();
+}
+
+class _CommentBottomSheetState extends State<_CommentBottomSheet> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _textController = TextEditingController();
+  final int _count = 10;
+  bool _hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<CommentCubit>().fetchComments(
+          postId: widget.postId,
+          token: widget.token,
+          userId: widget.userId,
+          index: '0',
+          count: _count.toString(),
+        );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _loadMore(int currentSize) {
+    context.read<CommentCubit>().fetchComments(
+          postId: widget.postId,
+          token: widget.token,
+          userId: widget.userId,
+          index: currentSize.toString(),
+          count: _count.toString(),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<CommentCubit, CommentState>(
+      listener: (context, state) {
+        if (state.isSuccess) {
+          _textController.clear();
+          // Auto-scroll to bottom
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
+        if (state.submitError != null) {
+          DialogUtils.showNotificationDialog(
+            context: context,
+            title: 'Lỗi gửi bình luận',
+            message: state.submitError!,
+            isSuccess: false,
+          );
+        }
+      },
+      builder: (context, state) {
+        _hasMore = state.comments.length >= _count;
+
         return Container(
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: const BoxDecoration(
@@ -292,37 +639,34 @@ class PostCard extends StatelessWidget {
                     Text("Bình luận", style: AppTextStyles.heading1.copyWith(fontSize: 18)),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
               const Divider(height: 1, color: AppColors.dividerBorder),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    _buildCommentItem(
-                      name: "Giảng viên Nguyễn Văn A",
-                      avatar: "https://i.pravatar.cc/150?u=gv1",
-                      content: "Bài làm rất tốt, góc quay rõ ràng.",
-                      time: "1 giờ trước",
-                    ),
-                    _buildCommentItem(
-                      name: "AI Chấm Điểm",
-                      avatar: "https://i.pravatar.cc/150?img=11",
-                      content: "Phân tích chuyển động: Độ chính xác 85%. Tốc độ tay hơi chậm ở giây thứ 10. Điểm: 8.5/10.",
-                      time: "2 giờ trước",
-                      isAi: true,
-                    ),
-                    _buildCommentItem(
-                      name: "Trần Thị B",
-                      avatar: "https://i.pravatar.cc/150?u=hs2",
-                      content: "Bạn quay bằng máy gì mà nét vậy?",
-                      time: "3 giờ trước",
-                    ),
-                  ],
-                ),
+                child: state.isLoading && state.comments.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue))
+                    : ListView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16.0),
+                        children: [
+                          if (_hasMore)
+                            Center(
+                              child: TextButton(
+                                onPressed: () => _loadMore(state.comments.length),
+                                child: const Text("Tải thêm các bình luận..."),
+                              ),
+                            ),
+                          ...state.comments.map((comment) => _buildCommentItem(
+                                name: comment.poster.name,
+                                avatar: comment.poster.avatar,
+                                content: comment.comment,
+                                time: comment.created,
+                              )),
+                        ],
+                      ),
               ),
               Container(
                 padding: EdgeInsets.only(
@@ -343,8 +687,9 @@ class PostCard extends StatelessWidget {
                           color: AppColors.scaffoldBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const TextField(
-                          decoration: InputDecoration(
+                        child: TextField(
+                          controller: _textController,
+                          decoration: const InputDecoration(
                             hintText: 'Viết bình luận...',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -353,10 +698,25 @@ class PostCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: AppColors.primaryBlue),
-                      onPressed: () {},
-                    ),
+                    state.isSubmitting
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.send, color: AppColors.primaryBlue),
+                            onPressed: () {
+                              final text = _textController.text.trim();
+                              if (text.isNotEmpty) {
+                                context.read<CommentCubit>().submitComment(
+                                      postId: widget.postId,
+                                      token: widget.token,
+                                      comment: text,
+                                    );
+                              }
+                            },
+                          ),
                   ],
                 ),
               ),
@@ -421,31 +781,6 @@ class PostCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4.0),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 4.0),
-            Text(
-              label,
-              style: AppTextStyles.buttonText.copyWith(color: color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // Dummy data sử dụng API Contract cho PostCard
@@ -461,3 +796,4 @@ final Map<String, dynamic> dummyPostData = {
   "like": "150",
   "comment": "32"
 };
+

@@ -6,6 +6,7 @@ import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/signup_scre
 import 'package:flutter_ai_tapchuan/features/main/presentation/pages/main_screen.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
+import '../../../../core/utils/dialog_utils.dart';
 //import '../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -45,23 +46,27 @@ class _LoginScreenState extends State<LoginScreen> {
               listener: (context, state) {
                 // Lắng nghe khi đăng nhập thành công
                 if (state.isSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Chào mừng ${state.username} quay trở lại!')),
-                  );
-                  // Chuyển sang màn hình chính MainScreen (chứa HomeScreen và MenuScreen)
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                  DialogUtils.showNotificationDialog(
+                    context: context,
+                    title: 'Đăng nhập thành công',
+                    message: 'Chào mừng ${state.username} quay trở lại!',
+                    isSuccess: true,
+                    onConfirm: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MainScreen()),
+                      );
+                    },
                   );
                 }
                 
                 // Lắng nghe khi có lỗi từ Server trả về (mã 9995, sai pass, mất mạng...)
                 if (state.error != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.error!),
-                      backgroundColor: AppColors.errorRed,
-                    ),
+                  DialogUtils.showNotificationDialog(
+                    context: context,
+                    title: 'Đăng nhập thất bại',
+                    message: state.error!,
+                    isSuccess: false,
                   );
                 }
               },

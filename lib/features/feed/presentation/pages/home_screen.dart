@@ -8,15 +8,20 @@ import '../../../../core/widgets/post_card.dart';
 import '../../../post/presentation/pages/create_post_screen.dart';
 import '../bloc/feed_cubit.dart';
 import '../bloc/feed_state.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
     // Inject BLoC ở cấp cao nhất của màn hình này
     return BlocProvider(
-      create: (context) => FeedCubit()..fetchPosts(),
+      create: (context) => FeedCubit()..fetchPosts(
+        token: authState.token,
+        userId: authState.userId,
+      ),
       child: const _HomeView(),
     );
   }
@@ -138,8 +143,8 @@ class _HomeView extends StatelessWidget {
                         postData: post,
                         isLiked: post['isLiked'] ?? false,
                         onLikeToggle: () {
-                          // Dispatch sự kiện đổi trạng thái Thích
-                          context.read<FeedCubit>().toggleLike(post['id']);
+                          final token = context.read<AuthCubit>().state.token;
+                          context.read<FeedCubit>().toggleLike(post['id'], token: token);
                         },
                       );
                     },

@@ -4,7 +4,8 @@ import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/input_box.dart';
 import '../../../../core/widgets/submit_button.dart';
 import '../../../../services/api_service.dart';
-import 'login_screen.dart'; // Hoặc HomeScreen tùy theo luồng bạn muốn
+import 'login_screen.dart';
+import '../../../../core/utils/dialog_utils.dart';
 
 class ChangeInfoAfterSignupScreen extends StatefulWidget {
   final String token; // Nhận token từ màn hình Verify truyền sang
@@ -38,19 +39,25 @@ class _ChangeInfoAfterSignupScreenState extends State<ChangeInfoAfterSignupScree
       if (!mounted) return;
 
       if (result['code'] == '1000') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cập nhật hồ sơ thành công! Vui lòng đăng nhập.')),
-        );
-        
-        // Hoàn tất luồng, đưa người dùng về màn hình đăng nhập chính
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Thành công',
+          message: 'Cập nhật hồ sơ thành công! Vui lòng đăng nhập.',
+          isSuccess: true,
+          onConfirm: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          },
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi nè: ${result['message']}')),
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Cập nhật thất bại',
+          message: 'Lỗi: ${result['message']}',
+          isSuccess: false,
         );
       }
     }
