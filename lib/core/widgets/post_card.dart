@@ -280,7 +280,7 @@ class PostCard extends StatelessWidget {
                   message: 'Đã xóa bài viết thành công!',
                   isSuccess: true,
                   onConfirm: () {
-                    context.read<FeedCubit>().fetchPosts(token: token, userId: authState.userId);
+                    context.read<FeedCubit>().fetchPosts(token: token);
                     Navigator.pop(dialogCtx);
                   },
                 );
@@ -428,7 +428,7 @@ class PostCard extends StatelessWidget {
                   message: 'Chỉnh sửa bài viết thành công!',
                   isSuccess: true,
                   onConfirm: () {
-                    context.read<FeedCubit>().fetchPosts(token: token, userId: authState.userId);
+                    context.read<FeedCubit>().fetchPosts(token: token);
                     Navigator.pop(dialogCtx);
                   },
                 );

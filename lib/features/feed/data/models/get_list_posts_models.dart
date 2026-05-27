@@ -4,7 +4,7 @@ class GetListPostsRequest {
   final String? lastId;
   final String? index;
   final String? count;
-  final String userId;
+  final String? userId;
 
   GetListPostsRequest({
     this.token,
@@ -12,7 +12,7 @@ class GetListPostsRequest {
     this.lastId,
     this.index,
     this.count,
-    required this.userId,
+    this.userId,
   });
 
   Map<String, dynamic> toJson() {
@@ -24,7 +24,7 @@ class GetListPostsRequest {
         'last_id': lastId!,
       if (index != null) 'index': index!,
       if (count != null) 'count': count!,
-      'user_id': userId,
+      'user_id': userId ?? '',
     };
   }
 }

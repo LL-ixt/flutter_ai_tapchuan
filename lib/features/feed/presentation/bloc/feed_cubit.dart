@@ -24,7 +24,7 @@ class FeedCubit extends Cubit<FeedState> {
         lastId: lastId,
         index: index,
         count: count,
-        userId: userId ?? 'u1',
+        userId: userId ?? '',
       );
       final response = await ApiService.getListPosts(request);
 

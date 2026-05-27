@@ -20,7 +20,6 @@ class HomeScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => FeedCubit()..fetchPosts(
         token: authState.token,
-        userId: authState.userId,
       ),
       child: const _HomeView(),
     );

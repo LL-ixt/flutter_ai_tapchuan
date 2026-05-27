@@ -14,7 +14,7 @@ void main() async {
   print("=== BAT DAU CHAY THU NGHIEM TICH HOP API ===");
 
   // 1. Thử đăng nhập bằng một tài khoản để lấy token
-  final phone = "0300000000";
+  final phone = "0359882538";
   final password = "123456";
   print("\n1. Đang gọi API login với phone: $phone...");
   final loginResult = await ApiService.login(phone, password);
