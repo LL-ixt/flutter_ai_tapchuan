@@ -16,9 +16,9 @@ class GetCommentRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
-      if (index != null) 'index': index!,
-      if (count != null) 'count': count!,
+      'id': ?id,
+      'index': ?index,
+      'count': ?count,
       'user_id': userId,
     };
   }
@@ -145,12 +145,12 @@ class SetCommentRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
-      if (comment != null) 'comment': comment!,
-      if (index != null) 'index': index!,
-      if (count != null) 'count': count!,
-      if (score != null) 'score': score!,
-      if (detailMistakes != null) 'detail_mistakes': detailMistakes!,
+      'id': ?id,
+      'comment': ?comment,
+      'index': ?index,
+      'count': ?count,
+      'score': ?score,
+      'detail_mistakes': ?detailMistakes,
     };
   }
 }

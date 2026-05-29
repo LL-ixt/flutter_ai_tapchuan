@@ -36,7 +36,7 @@ class AddPostRequest {
       'exercise_id': exerciseId,
       'described': described,
       'device_slave': deviceSlave,
-      if (deviceMaster != null) 'device_master': deviceMaster!,
+      'device_master': ?deviceMaster,
     };
   }
 }

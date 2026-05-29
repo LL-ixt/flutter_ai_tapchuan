@@ -22,8 +22,8 @@ class GetListPostsRequest {
         'category_id': categoryId!,
       if (lastId != null && lastId != '0' && lastId!.isNotEmpty)
         'last_id': lastId!,
-      if (index != null) 'index': index!,
-      if (count != null) 'count': count!,
+      'index': ?index,
+      'count': ?count,
       'user_id': userId ?? '',
     };
   }

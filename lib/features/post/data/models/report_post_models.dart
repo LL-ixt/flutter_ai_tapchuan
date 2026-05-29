@@ -14,9 +14,9 @@ class ReportPostRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
-      if (subject != null) 'subject': subject!,
-      if (details != null) 'details': details!,
+      'id': ?id,
+      'subject': ?subject,
+      'details': ?details,
     };
   }
 }

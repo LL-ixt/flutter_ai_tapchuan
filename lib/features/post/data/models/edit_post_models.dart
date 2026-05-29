@@ -28,9 +28,9 @@ class EditPostRequest {
   Map<String, String> toFields() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
+      'id': ?id,
       'described': described,
-      if (videoIndices != null) 'video_indices': videoIndices!,
+      'video_indices': ?videoIndices,
     };
   }
 }

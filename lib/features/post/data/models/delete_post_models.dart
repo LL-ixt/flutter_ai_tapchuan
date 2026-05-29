@@ -10,7 +10,7 @@ class DeletePostRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
+      'id': ?id,
     };
   }
 }
