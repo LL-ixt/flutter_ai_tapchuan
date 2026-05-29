@@ -5,6 +5,7 @@ import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../../../core/widgets/post_card.dart';
+import '../../../chat/presentation/pages/chat_screen.dart';
 import '../../../post/presentation/pages/create_post_screen.dart';
 import '../bloc/feed_cubit.dart';
 import '../bloc/feed_state.dart';
@@ -57,16 +58,33 @@ class _HomeView extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.search, color: AppColors.textPrimary, size: 22),
+                  icon: const Icon(
+                    Icons.search,
+                    color: AppColors.textPrimary,
+                    size: 22,
+                  ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchPage(),
+                      ),
+                    );
                   },
                   splashRadius: 24,
                 ),
               ),
               // --- KẾT THÚC NÚT KÍNH LÚP ---
               const SizedBox(width: 8.0),
-              _buildAppBarIcon(Icons.messenger_outline), // Tương đương Messenger
+              _buildAppBarIcon(
+                Icons.messenger_outline,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatScreen()),
+                  );
+                },
+              ), // Tương đương Messenger
               const SizedBox(width: 12.0),
               // _buildAppBarIcon(Icons.menu),
               _buildLogoutMenu(context), // Menu Đăng xuất
@@ -78,7 +96,10 @@ class _HomeView extends StatelessWidget {
           SliverToBoxAdapter(
             child: Container(
               color: AppColors.surfaceWhite,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               margin: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
@@ -103,14 +124,19 @@ class _HomeView extends StatelessWidget {
                       },
                       borderRadius: BorderRadius.circular(24),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.dividerBorder),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Text(
                           'Bạn đang nghĩ gì?',
-                          style: AppTextStyles.bodyMain.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.bodyMain.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -135,20 +161,17 @@ class _HomeView extends StatelessWidget {
                 );
               } else if (state is FeedLoaded) {
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final post = state.posts[index];
-                      return PostCard(
-                        postData: post,
-                        isLiked: post['isLiked'] ?? false,
-                        onLikeToggle: () {
-                          final token = context.read<AuthCubit>().state.token;
-                          context.read<FeedCubit>().toggleLike(post['id'], token: token);
-                        },
-                      );
-                    },
-                    childCount: state.posts.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final post = state.posts[index];
+                    return PostCard(
+                      postData: post,
+                      isLiked: post['isLiked'] ?? false,
+                      onLikeToggle: () {
+                        final token = context.read<AuthCubit>().state.token;
+                        context.read<FeedCubit>().toggleLike(post['id'], token: token);
+                      },
+                    );
+                  }, childCount: state.posts.length),
                 );
               } else if (state is FeedError) {
                 return SliverFillRemaining(
@@ -191,7 +214,10 @@ class _HomeView extends StatelessWidget {
               children: [
                 Icon(Icons.exit_to_app, color: AppColors.errorRed),
                 SizedBox(width: 10),
-                Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Đăng xuất',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),
@@ -199,8 +225,9 @@ class _HomeView extends StatelessWidget {
       ),
     );
   }
+
   // Nút tròn trên AppBar
-  Widget _buildAppBarIcon(IconData icon) {
+  Widget _buildAppBarIcon(IconData icon, {VoidCallback? onPressed}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: const BoxDecoration(
@@ -209,7 +236,7 @@ class _HomeView extends StatelessWidget {
       ),
       child: IconButton(
         icon: Icon(icon, color: AppColors.textPrimary, size: 22),
-        onPressed: () {},
+        onPressed: onPressed,
         splashRadius: 24,
       ),
     );
