@@ -29,8 +29,7 @@ class AuthCubit extends Cubit<AuthState> {
             role: fetchedRole,
          
             token: fetchedToken,
-          userId: fetchedId,
-        ,
+            userId: fetchedId
           ),
         );
       } else {
