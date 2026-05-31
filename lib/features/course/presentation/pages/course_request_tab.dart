@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/course/presentation/pages/all_students_screen.dart';
 import '../../../../core/constants/color_constants.dart';
+import '../../../../services/api_service.dart';
 import '../../../search/search_page.dart';
 
 class CourseRequestTab extends StatefulWidget {
@@ -12,8 +13,8 @@ class CourseRequestTab extends StatefulWidget {
 
 class _CourseRequestTabState extends State<CourseRequestTab> {
   List<Map<String, dynamic>> requests = [
-    {"id": "1", "name": "Nguyễn Chung Thủy", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=11", "status": "pending"},
-    {"id": "2", "name": "Thắng Xuân Vũ", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=12", "status": "pending"},
+    {"id": "1", "name": "Nguyễn Chung Thủy", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=11", "status": "pending", "isBlocked": false},
+    {"id": "2", "name": "Thắng Xuân Vũ", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=12", "status": "pending", "isBlocked": false},
   ];
 
   void _showConfirmDialog(String title, String content, VoidCallback onConfirm) {
@@ -40,6 +41,49 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
         );
       },
     );
+  }
+
+  void _showBlockOptions(Map<String, dynamic> req, int index) {
+    bool isBlocked = req['isBlocked'] ?? false;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(isBlocked ? Icons.lock_open : Icons.block, color: isBlocked ? Colors.green : Colors.red),
+                title: Text(isBlocked ? 'Bỏ chặn ${req['name']}' : 'Chặn ${req['name']}'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _handleBlockAction(req['id'], isBlocked ? 'unblock' : 'block', index);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleBlockAction(String userId, String type, int index) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    // Token thực tế sẽ lấy từ SharedPreferences/AuthBloc, ở đây dùng tạm 'mock_token'
+    final result = await ApiService.setBlock("mock_token", userId, type);
+    
+    // Giả sử mã 1000 là success (theo chuẩn API của app này)
+    if (result['code'] == '1000' || result['code'] == '200' || result['code'] == 1000 || result['code'] == 200) {
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Đã ${type == 'block' ? 'chặn' : 'bỏ chặn'} người dùng')));
+      if (mounted) {
+        setState(() {
+          requests[index]['isBlocked'] = (type == 'block');
+        });
+      }
+    } else {
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Lỗi: ${result['message']}')));
+    }
   }
 
   @override
@@ -143,10 +187,10 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                 ],
               ),
             ),
-            IconButton(
+              IconButton(
               icon: const Icon(Icons.more_horiz, color: Colors.grey),
               onPressed: () {
-                // TODO: Bật popup tùy chọn "Chặn" ở đây
+                _showBlockOptions(req, index);
               },
             ),
           ],
@@ -210,6 +254,12 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[200], elevation: 0),
                         child: const Text('Xóa', style: TextStyle(color: Colors.black)),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                      onPressed: () {
+                        _showBlockOptions(req, index);
+                      },
                     ),
                   ],
                 )

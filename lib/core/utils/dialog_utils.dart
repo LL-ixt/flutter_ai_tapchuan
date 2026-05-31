@@ -31,7 +31,7 @@ class DialogUtils {
                   decoration: BoxDecoration(
                     color: isSuccess 
                         ? AppColors.secondaryBlueLight 
-                        : AppColors.errorRed.withOpacity(0.1),
+                        : AppColors.errorRed.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

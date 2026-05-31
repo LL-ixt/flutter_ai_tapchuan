@@ -448,6 +448,113 @@ class ApiService {
     }
   }
 
+  // 9. API: BLOCK/UNBLOCK USER (blocks)
+  static Future<Map<String, dynamic>> setBlock(
+    String token, 
+    String userId, 
+    String type, // '0' = block, '1' = unblock (thường là thế)
+  ) async {
+    final url = Uri.parse('$baseUrl/set_block'); // Fix endpoint URL
+    try {
+      // Chuẩn API IT4788: type = 0 (block) / 1 (unblock)
+      // Nhưng user request ghi: type (block, unblock), để chắc chắn ta sẽ map
+      String apiType = type;
+      if (type == 'block' || type == '0') apiType = '0';
+      if (type == 'unblock' || type == '1') apiType = '1';
+
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'userId': userId,
+          'type': apiType,
+        },
+      );
+      print("status code setBlock: ${response.statusCode}");
+      print("=== API Set Block Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  // 10. API: LẤY CÀI ĐẶT THÔNG BÁO (get_push_settings)
+  static Future<Map<String, dynamic>> getPushSettings(String token) async {
+    final url = Uri.parse('$baseUrl/get_push_settings');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+        },
+      );
+      print("status code getPushSettings: ${response.statusCode}");
+      print("=== API Get Push Settings Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  // 11. API: CẬP NHẬT CÀI ĐẶT THÔNG BÁO (set_push_settings)
+  static Future<Map<String, dynamic>> setPushSettings({
+    required String token,
+    bool? likeComment,
+    bool? fromFriends,
+    bool? requestedFriend,
+    bool? suggestedFriend,
+    bool? birthday,
+    bool? video,
+    bool? report,
+    bool? soundOn,
+    bool? notificationOn,
+    bool? vibrantOn,
+    bool? ledOn,
+  }) async {
+    // API endpoint được sửa thành set_push_settings
+    final url = Uri.parse('$baseUrl/set_push_settings'); 
+    
+    // Yêu cầu của bạn là input on/off, tôi sẽ map bool -> "1"/"0" hoặc "on"/"off" tuỳ BE, nhưng thường BE nhận 1/0
+    String toVal(bool? val) => val == true ? '1' : '0';
+
+    final body = <String, String>{
+      'token': token,
+    };
+    
+    if (likeComment != null) body['likeComment'] = toVal(likeComment);
+    if (fromFriends != null) body['fromFriends'] = toVal(fromFriends);
+    if (requestedFriend != null) body['requestedFriend'] = toVal(requestedFriend);
+    if (suggestedFriend != null) body['suggestedFriend'] = toVal(suggestedFriend);
+    if (birthday != null) body['birthday'] = toVal(birthday);
+    if (video != null) body['video'] = toVal(video);
+    if (report != null) body['report'] = toVal(report);
+    if (soundOn != null) body['soundOn'] = toVal(soundOn);
+    if (notificationOn != null) body['notificationOn'] = toVal(notificationOn);
+    if (vibrantOn != null) body['vibrantOn'] = toVal(vibrantOn);
+    if (ledOn != null) body['ledOn'] = toVal(ledOn);
+
+    try {
+      final response = await http.post(url, body: body);
+      print("status code setPushSettings: ${response.statusCode}");
+      print("=== API Set Push Settings Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
   static Future<AddPostResponse> addPost(AddPostRequest request) async {
     final url = Uri.parse('$baseUrl/add_post');
     try {
