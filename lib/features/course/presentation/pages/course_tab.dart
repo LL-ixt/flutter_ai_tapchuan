@@ -134,26 +134,4 @@ class CourseTab extends StatelessWidget {
       },
     );
   }
-
-  Widget _buildStudentList(BuildContext context, List students) {
-    if (students.isEmpty) {
-      return const Center(child: Text('Chưa có học viên nào.'));
-    }
-
-    return ListView.builder(
-      itemCount: students.length,
-      itemBuilder: (context, index) {
-        final student = students[index];
-        return StudentListTile(
-          student: student,
-          onApprove: () {
-            context.read<CourseCubit>().approveStudent(student.id);
-          },
-          onReject: () {
-            context.read<CourseCubit>().rejectStudent(student.id);
-          },
-        );
-      },
-    );
-  }
 }

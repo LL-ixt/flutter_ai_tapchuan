@@ -5,6 +5,8 @@ import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.d
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../../../features/auth/presentation/pages/login_screen.dart';
+import 'settings_screen.dart';
+import 'blocked_users_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -113,6 +115,34 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                 );
               },
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.settings, color: Colors.black87),
+                      title: const Text('Cài đặt thông báo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.block, color: Colors.black87),
+                      title: const Text('Danh sách chặn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const BlockedUsersScreen()));
+                      },
+                    ),
+                    const Divider(),
+                  ],
+                ),
+              ),
             ),
 
             SliverFillRemaining(
