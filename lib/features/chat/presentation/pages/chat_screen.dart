@@ -153,7 +153,12 @@ class _ConversationListState extends State<_ConversationList> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ChatRoomDetailScreen(), // Gọi đúng tên trang UI bạn thiết lập
+                          builder: (_) => ChatRoomDetailScreen(
+                            partnerInfo: partnerInfo,
+                            token: widget.token,
+                            myInfo: myInfo,
+                            conversationId: partnerInfo?['conversationId']?.toString(), // Có thể null cho chat mới
+                          ),
                         ),
                       ).then((_) => _loadConversations());
                     }
@@ -316,13 +321,19 @@ class _ConversationListState extends State<_ConversationList> {
                 token: widget.token,
                 myInfo: myInfo,
                 partnerInfo: partnerInfo,
+                conversationId: _conversationId(conversation),
               );
 
               // 4. CHUYỂN MÀN HÌNH SANG GIAO DIỆN NHẮN TIN THỜI GIAN THỰC
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ChatRoomDetailScreen(), // Khung UI ChatDetailScreen chứa ListView đập nhả tin nhắn
+                  builder: (_) => ChatRoomDetailScreen(
+                    partnerInfo: partnerInfo,
+                    token: widget.token,
+                    myInfo: myInfo,
+                    conversationId: _conversationId(conversation),
+                  ),
                 ),
               ).then((_) => _loadConversations()); // Khi back từ phòng chat ra ngoài thì làm mới danh sách tin nhắn
             },

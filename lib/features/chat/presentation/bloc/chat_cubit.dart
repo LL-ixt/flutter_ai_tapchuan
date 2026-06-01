@@ -8,6 +8,7 @@ class ChatCubit extends Cubit<ChatState> {
   IO.Socket? socket;
   Timer? _availableTimer; // Timer xử lý sự kiện định kỳ 1s
   Map<String, dynamic>? _myInfo; // Lưu thông tin của chính mình để sử dụng trong sendMessage
+  String? _conversationId; // Lưu conversationId để sử dụng khi gửi tin nhắn
 
   ChatCubit() : super(const ChatState.initial());
 
@@ -16,10 +17,17 @@ class ChatCubit extends Cubit<ChatState> {
     required String token,
     required Map<String, dynamic> myInfo,       // Thông tin của chính bạn {id, avatar, name}
     required Map<String, dynamic> partnerInfo,  // Thông tin đối phương lấy từ get_user_info
+    String? conversationId,
   }) {
-    // Lưu thông tin của chính mình để sử dụng trong sendMessage
+    // Lưu thông tin của chính mình và conversationId để sử dụng trong sendMessage
     _myInfo = myInfo;
-    emit(const ChatState.loading());
+    _conversationId = conversationId ?? partnerInfo['conversationId']?.toString();
+    
+    // Chỉ emit loading state nếu chưa có tin nhắn (lần đầu tiên join)
+    if (state.messages.isEmpty) {
+      emit(const ChatState.loading());
+    }
+    
     final myRealID = myInfo['id'] ?? '';
     // 1. Cấu hình và kết nối Socket (giữ cấu hình của nhóm bạn)
     socket ??= IO.io('https://group1.it4788.sukkaito.id.vn', IO.OptionBuilder()
@@ -55,7 +63,7 @@ class ChatCubit extends Cubit<ChatState> {
       
       // Chỉ khi Server xác nhận ONLINE hoàn toàn, mới bắn 'joinchat'
       socket!.emit('joinchat', {
-        'conversationId': partnerInfo['conversationId'] ?? '' // Hoặc ID phòng chat nếu có
+        'conversationId': _conversationId ?? partnerInfo['conversationId'] ?? '' // Hoặc ID phòng chat nếu có
       });
 
       // Chạy heartbeat 'available' định kỳ 10-20 giây một lần để server cập nhật thời gian sống
@@ -121,11 +129,14 @@ class ChatCubit extends Cubit<ChatState> {
 
     if (content.trim().isEmpty) return;
 
+    // Ưu tiên conversationId từ parameter, nếu không có thì dùng từ _conversationId
+    final finalConversationId = conversationId ?? _conversationId;
+
     // ĐÓNG GÓI PAYLOAD THEO ĐÚNG ĐÒI HỎI CỦA BACKEND NESTJS
     final Map<String, dynamic> nestPayload = {
       'message': content.trim(),        // Server đọc: data?.message
       'partnerId': partnerId,           // Server đọc: data?.partnerId
-      if (conversationId != null) 'conversationId': conversationId, // Server đọc: data?.conversationId
+      if (finalConversationId != null) 'conversationId': finalConversationId, // Server đọc: data?.conversationId
     };
 
     // BẮN LÊN CỔNG 'send'
@@ -160,6 +171,13 @@ class ChatCubit extends Cubit<ChatState> {
     socket!.on('onmessage', (data) {
       debugPrint("=== Nhận tin nhắn thực tế từ Server: $data ===");
       final Map<String, dynamic> incomingData = Map<String, dynamic>.from(data);
+      
+      // Nếu server trả về conversationId, lưu lại để sử dụng sau này
+      if (incomingData['conversationId'] != null) {
+        _conversationId = incomingData['conversationId'].toString();
+      } else if (incomingData['conversation_id'] != null) {
+        _conversationId = incomingData['conversation_id'].toString();
+      }
       
       // Đồng bộ cấu trúc thô thành Map<String, dynamic> sạch để add vào danh sách chat
       final Map<String, dynamic> formattedMessage = {
@@ -209,6 +227,18 @@ class ChatCubit extends Cubit<ChatState> {
       // Bắn sự kiện ngắt kết nối riêng cho phòng chat này theo slide [cite: 59, 61]
       socket!.emit('disconnect'); 
     }
+  }
+
+  // Hàm này cập nhật state với tin nhắn quá khứ từ API
+  void updateHistoricalMessages({
+    required Map<String, dynamic> partnerInfo,
+    required List<Map<String, dynamic>> messages,
+  }) {
+    emit(ChatState.success(
+      partnerInfo: partnerInfo,
+      messages: messages,
+      isConnected: false,
+    ));
   }
 
   @override
