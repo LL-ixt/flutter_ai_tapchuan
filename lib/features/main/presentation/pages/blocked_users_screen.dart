@@ -28,7 +28,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (mounted) {
       if (response['code'] == '1000' || response['code'] == '200') {
         setState(() {
-          blockedUsers = response['data'] ?? [];
+          blockedUsers = (response['data']?['users'] as List<dynamic>?) ?? [];
           isLoading = false;
         });
       } else {

@@ -22,7 +22,8 @@ class _ChatRoomDetailScreenState extends State<ChatRoomDetailScreen> {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
       // Gọi Cubit thực thi bắn sự kiện 'send' qua đường ống Socket
-      context.read<ChatCubit>().sendMessage(content: text);
+      final partnerId = context.read<ChatCubit>().state.partnerInfo?['id'] ?? '';
+      context.read<ChatCubit>().sendMessage(content: text, partnerId: partnerId);
       _messageController.clear();
       
       // Cuộn xuống cuối cùng để xem tin nhắn mới

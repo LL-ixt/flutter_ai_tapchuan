@@ -33,7 +33,7 @@ class ChatCubit extends Cubit<ChatState> {
       socket!.connect();
     }
 
-    // 2. Đóng gói dữ liệu JSON biến đổi từ lớp Message đúng chuẩn Slide [cite: 71, 83]
+    // 2. Đóng gói dữ liệu JSON biến đổi từ lớp Message đúng chuẩn Slide 
     final Map<String, dynamic> messagePayload = {
       'sender': {
         'id': myInfo['id'],
@@ -54,11 +54,19 @@ class ChatCubit extends Cubit<ChatState> {
       debugPrint("=== [Socket.IO] Kết nối thành công tới Server trường! ===");
       
       // Chỉ khi Server xác nhận ONLINE hoàn toàn, mới bắn 'joinchat'
-      socket!.emit('joinchat', messagePayload);
-      debugPrint("=== Đã emit 'joinchat' sau khi kết nối ổn định: $messagePayload ===");
+      socket!.emit('joinchat', {
+        'conversationId': partnerInfo['conversationId'] ?? '' // Hoặc ID phòng chat nếu có
+      });
 
-      // Bắt đầu chạy ngầm định kỳ báo cáo available mỗi 1 giây
-      _startAvailableHeartbeat(messagePayload);
+      // Chạy heartbeat 'available' định kỳ 10-20 giây một lần để server cập nhật thời gian sống
+      Timer.periodic(const Duration(seconds: 15), (timer) {
+        if (socket != null && socket!.connected) {
+          debugPrint("=== [Socket.IO] Gửi sự kiện 'available' định kỳ để giữ kết nối sống ===");
+          socket!.emit('available', {});
+        } else {
+          timer.cancel();
+        }
+      });
       
       // Mở cổng luôn luôn lắng nghe tin nhắn mới đập nhả từ Server
       listenToIncomingMessages();
@@ -103,25 +111,9 @@ class ChatCubit extends Cubit<ChatState> {
     listenToIncomingMessages();
   }
   // HÀM CHẠY NGẦM ĐỊNH KỲ CHO BIẾN AVAILABLE 
-  void _startAvailableHeartbeat(Map<String, dynamic> basePayload) {
-    _availableTimer?.cancel(); // Hủy timer cũ nếu có để tránh trùng lặp
-    
-    _availableTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (socket != null && socket!.connected) {
-        
-        // Tạo gói dữ liệu available (cập nhật lại thời gian hiện tại)
-        final Map<String, dynamic> availablePayload = Map.from(basePayload);
-        availablePayload['created'] = DateTime.now().toIso8601String();
-
-        // Bắn sự kiện 'available' lên server [cite: 56, 74]
-        socket!.emit('available', availablePayload);
-        debugPrint("=== [Heartbeat] Đã emit 'available' ===");
-      }
-    });
-  }
 
   // HÀM GỬI TIN NHẮN MỚI LÊN SERVER VIA SOCKET
-  void sendMessage({required String content}) {
+  void sendMessage({required String content, required String partnerId, String? conversationId}) {
     if (socket == null || !socket!.connected) {
       debugPrint("Không thể gửi tin nhắn vì Socket chưa kết nối!");
       return;
@@ -129,37 +121,35 @@ class ChatCubit extends Cubit<ChatState> {
 
     if (content.trim().isEmpty) return;
 
-    if (state.partnerInfo == null || _myInfo == null) return;
-    final Map<String, dynamic> partnerInfo = Map<String, dynamic>.from(state.partnerInfo!);
-
-    // Sử dụng myInfo được lưu từ joinChatRoom để lấy sender ID chính xác
-    final String myId = _myInfo!['id']?.toString() ?? 'my_id_001'; 
-
-    // Đóng gói gói tin JSON biến đổi từ lớp Message đúng chuẩn đặc tả:
-    final Map<String, dynamic> messagePayload = {
-      'sender': {
-        'id': myId,
-        'avatar': '', // Điền nếu có
-        'name': 'Tôi', // Điền nếu có
-      },
-      'receiver': {
-        'id': partnerInfo['id'],
-        'avatar': partnerInfo['avatar'] ?? '',
-        'name': partnerInfo['username'] ?? partnerInfo['name'] ?? '',
-      },
-      // KHÔNG CÓ trường message_id khi gửi tin nhắn mới
-      'created': DateTime.now().toIso8601String(),
-      'content': content.trim(),
+    // ĐÓNG GÓI PAYLOAD THEO ĐÚNG ĐÒI HỎI CỦA BACKEND NESTJS
+    final Map<String, dynamic> nestPayload = {
+      'message': content.trim(),        // Server đọc: data?.message
+      'partnerId': partnerId,           // Server đọc: data?.partnerId
+      if (conversationId != null) 'conversationId': conversationId, // Server đọc: data?.conversationId
     };
 
-    // BẮN SỰ KIỆN 'send' LÊN SERVER
-    socket!.emit('send', messagePayload);
-    debugPrint("=== Đã emit sự kiện 'send' với data: $messagePayload ===");
+    // BẮN LÊN CỔNG 'send'
+    socket!.emit('send', nestPayload);
+    debugPrint("=== Đã emit sự kiện 'send' bản mới: $nestPayload ===");
 
-    // TÙY CHỌN: Cập nhật tin nhắn tạm thời lên UI của chính mình ngay lập tức để tạo cảm giác mượt mà (Optimistic UI)
-    // Hoặc bạn có thể đợi server trả về sự kiện rồi mới add vào. Dưới đây là cách add luôn trên UI client:
+    // Để giao diện của bạn hiển thị mượt mà ngay lập tức (Xử lý UI cục bộ)
+    final localMessagePayload = {
+      'messageId': 'temp_${DateTime.now().millisecondsSinceEpoch}', // Tạm ID cho tới khi server phản hồi
+      'content': content.trim(),
+      'created': DateTime.now().toIso8601String(),
+      'sender': {
+        'id': _myInfo?['id'] ?? '',
+        'name': _myInfo?['username'] ?? _myInfo?['name'] ?? 'Tôi',
+        'avatar': _myInfo?['avatar'] ?? '',
+      },
+      'receiver': {
+        'id': partnerId,
+        'name': state.partnerInfo?['username'] ?? state.partnerInfo?['name'] ?? '',
+        'avatar': state.partnerInfo?['avatar'] ?? '',
+      }
+    };
     final currentMessages = List<Map<String, dynamic>>.from(state.messages);
-    currentMessages.add(messagePayload);
+    currentMessages.add(localMessagePayload);
     emit(state.copyWith(messages: currentMessages));
   }
 
@@ -167,27 +157,31 @@ class ChatCubit extends Cubit<ChatState> {
   void listenToIncomingMessages() {
     if (socket == null) return;
 
-    // Lắng nghe sự kiện new_message - Server báo có tin nhắn mới từ một trong hai người
-    socket!.on('new_message', (data) {
-      debugPrint("=== Nhận tin nhắn thực từ NestJS: $data ===");
-      final Map<String, dynamic> nestMessage = Map<String, dynamic>.from(data);
+    socket!.on('onmessage', (data) {
+      debugPrint("=== Nhận tin nhắn thực tế từ Server: $data ===");
+      final Map<String, dynamic> incomingData = Map<String, dynamic>.from(data);
       
-      // Convert cấu trúc dữ liệu từ NestJS về cấu trúc hiển thị của giao diện Flutter
+      // Đồng bộ cấu trúc thô thành Map<String, dynamic> sạch để add vào danh sách chat
       final Map<String, dynamic> formattedMessage = {
-        'messageId': nestMessage['messageId'],
-        'content': nestMessage['message'], // NestJS gửi trường 'message' thay vì 'content'
-        'senderId': nestMessage['senderId'],
-        'created': nestMessage['createdAt'], // NestJS gửi trường 'createdAt' thay vì 'created'
-        'sender': {
-          'id': nestMessage['senderId'],
-          'name': '',
-          'avatar': '',
-        }
+        'messageId': incomingData['message_id'] ?? incomingData['messageId'] ?? '',
+        'content': incomingData['content'] ?? '',
+        'created': incomingData['created'] ?? DateTime.now().toIso8601String(),
+        'sender': Map<String, dynamic>.from(incomingData['sender'] ?? {}),
+        'receiver': Map<String, dynamic>.from(incomingData['receiver'] ?? {}),
       };
-      
+
       final currentMessages = List<Map<String, dynamic>>.from(state.messages);
-      currentMessages.add(formattedMessage);
-      emit(state.copyWith(messages: currentMessages));
+      
+      // Kiểm tra tránh trùng lặp tin nhắn (Do UI local đã chèn trước đó)
+      final isExist = currentMessages.any((m) => 
+        m['content'] == formattedMessage['content'] && 
+        m['sender']?['id'] == formattedMessage['sender']?['id']
+      );
+      
+      if (!isExist) {
+        currentMessages.add(formattedMessage);
+        emit(state.copyWith(messages: currentMessages));
+      }
     });
 
     // Lắng nghe sự kiện deletemessage - Server báo khi có yêu cầu thu hồi tin nhắn

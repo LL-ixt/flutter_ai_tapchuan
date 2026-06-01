@@ -52,29 +52,8 @@ class FeedCubit extends Cubit<FeedState> {
       emit(FeedError('Lỗi hệ thống: $e'));
     }
 
-    // Giả lập delay mạng 1.5 giây để thấy được CircularProgressIndicator
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Kiểm tra item mới
     await ApiService.checkNewItem('0');
-
-    // Mock 5 bài viết theo format của API Contract
-    final List<Map<String, dynamic>> mockPosts = List.generate(5, (index) {
-      return {
-        "id": "post_$index",
-        "author": {
-          "id": "user_$index",
-          "username": "Học viên $index",
-          "avatar": "https://i.pravatar.cc/150?u=user_$index",
-        },
-        "described":
-            "Đây là bài tập phần ${index + 1} của mình. Mọi người xem thử và góp ý giúp mình nhé!",
-        "created_at": "${index + 1} giờ trước",
-        "like": "${(index + 1) * 15}",
-        "comment": "${(index + 1) * 4}",
-        "isLiked": false, // Trường trạng thái Like ở local
-      };
-    });
-
-    emit(FeedLoaded(mockPosts));
   }
 
   void toggleLike(String postId, {String? token}) async {

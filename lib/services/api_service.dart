@@ -754,7 +754,7 @@ class ApiService {
   }
 
   static Future<LikeResponse> like(LikeRequest request) async {
-    final url = Uri.parse('$baseUrl/like');
+    final url = Uri.parse('$baseUrl/like_post');
     try {
       final response = await http.post(
         url,
