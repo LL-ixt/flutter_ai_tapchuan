@@ -12,7 +12,7 @@ class GetPostRequest {
   Map<String, dynamic> toJson() {
     return {
       'token': token ?? '',
-      if (id != null) 'id': id!,
+      'id': ?id,
       if (userId != null && userId!.isNotEmpty) 'user_id': userId!,
     };
   }
