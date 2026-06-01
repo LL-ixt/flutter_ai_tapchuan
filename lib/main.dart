@@ -6,7 +6,7 @@ import 'features/auth/presentation/pages/login_screen.dart';
 //import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 //import 'features/main/presentation/pages/main_screen.dart';
-
+import 'features/chat/presentation/bloc/chat_cubit.dart';
 void main() {
   runApp(
     MultiBlocProvider(
@@ -14,6 +14,9 @@ void main() {
         BlocProvider<AuthCubit>(
           create: (_) => AuthCubit(),
         ),
+        BlocProvider<ChatCubit>(
+          create: (_) => ChatCubit()
+        )
       ],
       child: const MyApp(),
     ),

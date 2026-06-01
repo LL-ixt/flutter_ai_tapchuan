@@ -325,9 +325,9 @@ class ApiService {
     }
   }
   // 5. API: LẤY THÔNG TIN NGƯỜI DÙNG (get_user_info) 
-  static Future<Map<String, dynamic>> getUserInfo(
-    String token, 
-    {String userId = ""}
+  static Future<Map<String, dynamic>> getUserInfo({
+    required String token, 
+    String userId = ""}
   ) async {
     final url = Uri.parse('$baseUrl/get_user_info');
     try {
@@ -335,7 +335,7 @@ class ApiService {
         url,
         body: {
           'token': token,
-          'user_id': userId, 
+          'userId': userId, 
         },
       );
       print("status code getUserInfo: ${response.statusCode}");

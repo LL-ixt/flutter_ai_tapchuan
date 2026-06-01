@@ -3,7 +3,10 @@ import 'package:flutter_ai_tapchuan/core/constants/color_constants.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_ai_tapchuan/services/api_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../bloc/create_chat_cubit.dart';
+import '../bloc/create_chat_state.dart';
+import '../bloc/chat_cubit.dart';
+import 'chat_room_screen.dart';
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
@@ -25,7 +28,10 @@ class ChatScreen extends StatelessWidget {
       );
     }
 
-    return _ConversationList(token: token);
+    return BlocProvider(
+      create: (_) => CreateChatCubit(),
+      child: _ConversationList(token: token),
+    );
   }
 }
 
@@ -71,6 +77,137 @@ class _ConversationListState extends State<_ConversationList> {
     }
   }
 
+  // Hàm hiển thị hộp thoại tìm kiếm "Tạo tin nhắn mới"
+  void _showNewMessageSheet(BuildContext context) {
+    final searchController = TextEditingController();
+    final createCubit = context.read<CreateChatCubit>();
+    createCubit.reset(); // Xóa trạng thái cũ đi nếu có
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return BlocProvider.value(
+          value: createCubit, // Truyền Cubit hiện tại vào sheet context
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Tạo tin nhắn mới",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                
+                // Ô Search box nhập ID theo đúng thiết kế slide 
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: "Nhập user_id đối phương...",
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // Lắng nghe dữ liệu đổ về từ Cubit phát ra
+                BlocConsumer<CreateChatCubit, CreateChatState>(
+                  listener: (context, state) {
+                    if (state is CreateChatSuccess) {
+                      Navigator.pop(sheetContext); // Đóng hộp thoại tìm kiếm
+                      
+                      // 1. Lấy thông tin mình từ AuthCubit
+                      final authState = context.read<AuthCubit>().state;
+                      final myInfo = {
+                        'id': authState.userId ?? 'my_id_001', 
+                        'username': authState.username, 
+                        'avatar': ''
+                      };
+                      
+                      // 2. Thông tin đối phương vừa bốc được qua API get_user_info
+                      final partnerInfo = state.partnerInfo; 
+
+                      // 3. Kích hoạt Socket phòng chat qua ChatCubit
+                      context.read<ChatCubit>().joinChatRoom(
+                        token: widget.token,
+                        myInfo: myInfo,
+                        partnerInfo: partnerInfo,
+                      );
+
+                      // 4. CHUYỂN MÀN HÌNH SANG GIAO DIỆN NHẮN TIN THỜI GIAN THỰC
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ChatRoomDetailScreen(), // Gọi đúng tên trang UI bạn thiết lập
+                        ),
+                      ).then((_) => _loadConversations());
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is CreateChatLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        if (state is CreateChatFailure)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Text(
+                              state.message,
+                              style: const TextStyle(color: AppColors.errorRed),
+                            ),
+                          ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryBlue,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              context.read<CreateChatCubit>().findUserToChat(
+                                    token: widget.token,
+                                    userId: searchController.text.trim(),
+                                  );
+                            },
+                            child: const Text("Tìm kiếm & Bắt đầu Chat", style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 25),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _deleteConversation(Map<String, dynamic> conversation) async {
     await ApiService.deleteConversation(
       widget.token,
@@ -87,6 +224,11 @@ class _ConversationListState extends State<_ConversationList> {
       appBar: _ChatAppBar(
         title: 'Chat',
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: AppColors.primaryBlue),
+            tooltip: "Tạo tin nhắn mới",
+            onPressed: () => _showNewMessageSheet(context),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadConversations,
@@ -152,15 +294,37 @@ class _ConversationListState extends State<_ConversationList> {
               ],
             ),
             onTap: () {
+              // 1. Lấy Token và thông tin của bạn từ AuthCubit Global
+              final authState = context.read<AuthCubit>().state;
+              
+              final Map<String, dynamic> myInfo = {
+                'id': authState.userId ?? 'my_id_001', // ID thật của bạn lưu trong AuthState
+                'username': authState.username,
+                'avatar': '', 
+              };
+
+              // 2. Trích xuất thông tin của đối phương (Partner) từ cục hội thoại cũ này
+              _partner(conversation); // Hàm helper có sẵn cuối file của bạn
+              final Map<String, dynamic> partnerInfo = {
+                'id': _partnerId(conversation),
+                'username': _title(conversation),
+                'avatar': _avatar(conversation),
+              };
+
+              // 3. Gọi ChatCubit để: Kích hoạt Socket kết nối server trường -> Bắn 'joinchat' -> Nuôi 'available' mỗi giây
+              context.read<ChatCubit>().joinChatRoom(
+                token: widget.token,
+                myInfo: myInfo,
+                partnerInfo: partnerInfo,
+              );
+
+              // 4. CHUYỂN MÀN HÌNH SANG GIAO DIỆN NHẮN TIN THỜI GIAN THỰC
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => _ChatRoomScreen(
-                    token: widget.token,
-                    conversation: conversation,
-                  ),
+                  builder: (_) => const ChatRoomDetailScreen(), // Khung UI ChatDetailScreen chứa ListView đập nhả tin nhắn
                 ),
-              ).then((_) => _loadConversations());
+              ).then((_) => _loadConversations()); // Khi back từ phòng chat ra ngoài thì làm mới danh sách tin nhắn
             },
           );
         },
@@ -422,12 +586,14 @@ String _avatar(Map<String, dynamic> conversation) {
 String _lastMessage(Map<String, dynamic> conversation) {
   final lastMessage =
       _asMap(conversation['lastMessage']) ??
-      _asMap(conversation['last_message']);
+      _asMap(conversation['last_message']) ??
+      _asMap(conversation['lastmessage']);
   return _firstString([
     lastMessage?['content'],
     lastMessage?['message'],
     conversation['lastMessage'],
     conversation['last_message'],
+    conversation['lastmessage'],
     conversation['message'],
   ], fallback: 'Nhấn để xem hội thoại');
 }
