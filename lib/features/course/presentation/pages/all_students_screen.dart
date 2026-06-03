@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
+import '../../../../services/api_service.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 
 class AllStudentsScreen extends StatefulWidget {
   const AllStudentsScreen({super.key});
@@ -9,14 +12,43 @@ class AllStudentsScreen extends StatefulWidget {
 }
 
 class _AllStudentsScreenState extends State<AllStudentsScreen> {
-  // 1. Data giả lập danh sách học viên
-  List<Map<String, dynamic>> students = [
-    {"id": "1", "name": "Trang Phạm", "mutual": "0", "avatar": "https://i.pravatar.cc/150?img=1"},
-    {"id": "2", "name": "Nguyên Nhật", "mutual": "1", "avatar": "https://i.pravatar.cc/150?img=2"},
-    {"id": "3", "name": "Duy Nguyễn Ngọc", "mutual": "0", "avatar": "https://i.pravatar.cc/150?img=3"},
-    {"id": "4", "name": "Khanh Lê", "mutual": "1", "avatar": "https://i.pravatar.cc/150?img=4"},
-    {"id": "5", "name": "Bùi Văn Chí", "mutual": "2", "avatar": "https://i.pravatar.cc/150?img=5"},
-  ];
+  List<Map<String, dynamic>> students = [];
+  bool isLoading = true;
+  String? errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStudents();
+  }
+
+  Future<void> _fetchStudents() async {
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+    });
+
+    final token = context.read<AuthCubit>().state.token ?? "mock_token";
+    final response = await ApiService.getListStudents(token, 0, 50);
+
+    if (response['code'] == '1000') {
+      final List<dynamic> data = response['data'] ?? [];
+      setState(() {
+        students = data.map((e) => {
+          "id": e['id']?.toString() ?? "",
+          "name": e['username'] ?? "Không tên",
+          "mutual": "0", // Backend có thể chưa hỗ trợ mutual
+          "avatar": e['avatar'] ?? "https://i.pravatar.cc/150",
+        }).toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        errorMsg = response['message'] ?? "Lỗi không xác định";
+        isLoading = false;
+      });
+    }
+  }
 
   // 2. Hàm xử lý Sắp xếp
   void _sortStudents(String criteria) {
@@ -100,19 +132,23 @@ class _AllStudentsScreenState extends State<AllStudentsScreen> {
           ),
           // Danh sách học viên
           Expanded(
-            child: ListView.builder(
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                final item = students[index];
-                return ListTile(
-                  leading: CircleAvatar(radius: 30, backgroundImage: NetworkImage(item['avatar'])),
-                  title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: item['mutual'] != "0" ? Text('${item['mutual']} bạn chung') : null,
-                  trailing: const Icon(Icons.more_horiz),
-                  onTap: () {},
-                );
-              },
-            ),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : errorMsg != null
+                    ? Center(child: Text(errorMsg!, style: const TextStyle(color: Colors.red)))
+                    : ListView.builder(
+                        itemCount: students.length,
+                        itemBuilder: (context, index) {
+                          final item = students[index];
+                          return ListTile(
+                            leading: CircleAvatar(radius: 30, backgroundImage: NetworkImage(item['avatar'])),
+                            title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: item['mutual'] != "0" ? Text('${item['mutual']} bạn chung') : null,
+                            trailing: const Icon(Icons.more_horiz),
+                            onTap: () {},
+                          );
+                        },
+                      ),
           ),
         ],
       ),

@@ -20,7 +20,7 @@ class PostCubit extends Cubit<PostState> {
   Future<void> pickLeftVideo() async {
     if (state is PostInitial) {
       try {
-        final result = await FilePicker.platform.pickFiles(type: FileType.video);
+        final result = await FilePicker.pickFiles(type: FileType.video);
         if (result != null && result.files.isNotEmpty) {
           emit((state as PostInitial).copyWith(leftVideoFile: result.files.first));
         }
@@ -39,7 +39,7 @@ class PostCubit extends Cubit<PostState> {
   Future<void> pickRightVideo() async {
     if (state is PostInitial) {
       try {
-        final result = await FilePicker.platform.pickFiles(type: FileType.video);
+        final result = await FilePicker.pickFiles(type: FileType.video);
         if (result != null && result.files.isNotEmpty) {
           emit((state as PostInitial).copyWith(rightVideoFile: result.files.first));
         }
