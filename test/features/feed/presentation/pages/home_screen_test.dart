@@ -10,7 +10,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
 
       // Kiểm tra xem AppBar text có hiển thị không
-      expect(find.text('MERCARI'), findsOneWidget);
+      expect(find.text('EduSocial AI'), findsOneWidget);
       // Lúc đầu sẽ là loading state -> hiển thị ProgressIndicator
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       

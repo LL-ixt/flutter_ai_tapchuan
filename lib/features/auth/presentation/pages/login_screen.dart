@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Logo hoặc Tên ứng dụng
                       const Text(
-                        'MERCARI',
+                        'EduSocial AI',
                         style: TextStyle(
                           color: AppColors.primaryBlue,
                           fontSize: 40,

@@ -8,6 +8,7 @@ class AuthState extends Equatable {
   final String role;
   final String? token;
   final String? userId;
+  final String avatar;
   
   const AuthState._({
     this.isLoading = false,
@@ -17,6 +18,7 @@ class AuthState extends Equatable {
     this.role = '',
     this.token,
     this.userId,
+    this.avatar = '',
   });
 
   const AuthState.initial() : this._();
@@ -26,16 +28,40 @@ class AuthState extends Equatable {
     required String role,
     String? token,
     String? userId,
+    String avatar = '',
   }) : this._(
           isSuccess: true,
           username: username,
           role: role,
           token: token,
           userId: userId,
+          avatar: avatar,
         );
       
   const AuthState.failure(String error) : this._(error: error);
 
+  AuthState copyWith({
+    bool? isLoading,
+    bool? isSuccess,
+    String? error,
+    String? username,
+    String? role,
+    String? token,
+    String? userId,
+    String? avatar,
+  }) {
+    return AuthState._(
+      isLoading: isLoading ?? this.isLoading,
+      isSuccess: isSuccess ?? this.isSuccess,
+      error: error ?? this.error,
+      username: username ?? this.username,
+      role: role ?? this.role,
+      token: token ?? this.token,
+      userId: userId ?? this.userId,
+      avatar: avatar ?? this.avatar,
+    );
+  }
+
   @override
-  List<Object?> get props => [isLoading, isSuccess, error, username, role, token, userId];
+  List<Object?> get props => [isLoading, isSuccess, error, username, role, token, userId, avatar];
 }

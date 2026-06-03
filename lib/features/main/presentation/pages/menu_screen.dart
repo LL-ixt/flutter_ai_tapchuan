@@ -8,6 +8,7 @@ import '../../../../features/auth/presentation/pages/login_screen.dart';
 import 'settings_screen.dart';
 import 'blocked_users_screen.dart';
 import 'change_password_screen.dart';
+import 'test_user_info_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -75,7 +76,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                     child: Row(
                       children: [
-                        const AvatarWidget(radius: 30, imageUrl: "https://i.pravatar.cc/150?img=3"),
+                        AvatarWidget(radius: 30, imageUrl: state.avatar),
                         const SizedBox(width: 16.0),
                         Expanded(
                           child: Column(
@@ -133,6 +134,15 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                     const Divider(),
                     ListTile(
+                      leading: const Icon(Icons.lock_outline, color: Colors.black87),
+                      title: const Text('Đổi mật khẩu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordScreen()));
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
                       leading: const Icon(Icons.block, color: Colors.black87),
                       title: const Text('Danh sách chặn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
@@ -142,11 +152,11 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.lock_outline, color: Colors.black87),
-                      title: const Text('Đổi mật khẩu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      leading: const Icon(Icons.bug_report_outlined, color: Colors.black87),
+                      title: const Text('Test Get User Info', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const TestUserInfoScreen()));
                       },
                     ),
                     const Divider(),

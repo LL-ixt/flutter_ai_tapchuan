@@ -79,7 +79,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                     final user = blockedUsers[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: NetworkImage(user['avatar'] ?? "https://i.pravatar.cc/150?img=11"),
+                        backgroundImage: user['avatar'] != null && user['avatar'].toString().isNotEmpty
+                            ? NetworkImage(user['avatar'].toString())
+                            : const NetworkImage("https://i.pravatar.cc/150?img=11"),
+                        onBackgroundImageError: (exception, stackTrace) {},
+                        child: const Icon(Icons.person, color: Colors.grey),
                       ),
                       title: Text(user['name'] ?? "Người dùng"),
                       trailing: ElevatedButton(

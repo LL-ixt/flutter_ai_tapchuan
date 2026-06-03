@@ -21,12 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String _unreadNotifications = '0';
   String _unreadMessages = '0';
-
-  @override
-  void initState() {
-    super.initState();
-    _checkNewVersion();
-  }
+  late final PageController _pageController;
 
   Future<void> _checkNewVersion() async {
     final token = context.read<AuthCubit>().state.token ?? '';
@@ -129,17 +124,36 @@ class _MainScreenState extends State<MainScreen> {
     const MenuScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+    _checkNewVersion();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    _pageController.jumpToPage(index);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
         children: _screens,
       ),
       bottomNavigationBar: BottomNavigationBar(

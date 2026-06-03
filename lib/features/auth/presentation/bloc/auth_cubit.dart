@@ -20,16 +20,15 @@ class AuthCubit extends Cubit<AuthState> {
         String fetchedToken = userData['token'];
         await ApiService.setDevtoken(fetchedToken, 0, 'mock_device');
         String fetchedId = userData['id']?.toString() ?? userData['userId']?.toString() ?? 'user_current';
+        String fetchedAvatar = userData['avatar']?.toString() ?? '';
         // 2. Bắn trạng thái thành công kèm theo data thật
         emit(
           AuthState.success(
-          
             username: fetchedName,
-         
             role: fetchedRole,
-         
             token: fetchedToken,
-            userId: fetchedId
+            userId: fetchedId,
+            avatar: fetchedAvatar,
           ),
         );
       } else {
@@ -39,6 +38,13 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       emit(AuthState.failure('Lỗi kết nối hệ thống: $e'));
     }
+  }
+
+  void updateUserInfo({String? username, String? avatar}) {
+    emit(state.copyWith(
+      username: username,
+      avatar: avatar,
+    ));
   }
 
   void logout() async {

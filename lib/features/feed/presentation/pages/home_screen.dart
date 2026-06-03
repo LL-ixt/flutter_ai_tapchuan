@@ -10,6 +10,7 @@ import '../../../post/presentation/pages/create_post_screen.dart';
 import '../bloc/feed_cubit.dart';
 import '../bloc/feed_state.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,7 +41,7 @@ class _HomeView extends StatelessWidget {
           SliverAppBar(
             backgroundColor: AppColors.surfaceWhite,
             title: const Text(
-              'MERCARI',
+              'EduSocial AI',
               style: TextStyle(
                 color: AppColors.primaryBlue,
                 fontSize: 26,
@@ -100,9 +101,13 @@ class _HomeView extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
-                  const AvatarWidget(
-                    imageUrl: 'https://i.pravatar.cc/150?img=60',
-                    radius: 20,
+                  BlocBuilder<AuthCubit, AuthState>(
+                    builder: (context, authState) {
+                      return AvatarWidget(
+                        imageUrl: authState.avatar,
+                        radius: 20,
+                      );
+                    },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
