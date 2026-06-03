@@ -85,7 +85,7 @@ class _ProfileView extends StatelessWidget {
                       const SizedBox(height: 8),
                       GestureDetector(
                         onTap: () async {
-                          final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                          final result = await FilePicker.pickFiles(type: FileType.image);
                           if (result != null && result.files.isNotEmpty) {
                             setSheetState(() {
                               newCoverFile = result.files.first;
@@ -138,7 +138,7 @@ class _ProfileView extends StatelessWidget {
                       Center(
                         child: GestureDetector(
                           onTap: () async {
-                            final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                            final result = await FilePicker.pickFiles(type: FileType.image);
                             if (result != null && result.files.isNotEmpty) {
                               setSheetState(() {
                                 newAvatarFile = result.files.first;

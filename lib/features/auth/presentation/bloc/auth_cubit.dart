@@ -27,9 +27,9 @@ class AuthCubit extends Cubit<AuthState> {
         String fetchedToken = userData['token'];
         await ApiService.setDevtoken(fetchedToken, 0, 'mock_device');
         String fetchedId = userData['id']?.toString() ?? userData['userId']?.toString() ?? 'user_current';
-        
+        String fetchedAvatar = userData['avatar'] ?? "";
         // Lưu thông tin đăng nhập vào SharedPreferences
-        await _saveCredentials(fetchedToken, fetchedName, fetchedRole, fetchedId);
+        await _saveCredentials(fetchedToken, fetchedName, fetchedRole, fetchedId, );
         
         // 2. Bắn trạng thái thành công kèm theo data thật
         emit(
@@ -107,6 +107,8 @@ class AuthCubit extends Cubit<AuthState> {
       // Cho dù API logout lỗi (mất mạng) thì vẫn nên cho xóa ở client để người dùng thoát ra ngoài
     }
 
+    
+
     // 3. Xóa thông tin đăng nhập khỏi SharedPreferences
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -120,5 +122,12 @@ class AuthCubit extends Cubit<AuthState> {
 
     // 4. Phát ra trạng thái ban đầu (Xóa sạch mọi dữ liệu user, token về null)
     emit(const AuthState.initial());
+  }
+
+  void updateUserInfo({String? username, String? avatar}) {
+    emit(state.copyWith(
+      username: username,
+      avatar: avatar,
+    ));
   }
 }

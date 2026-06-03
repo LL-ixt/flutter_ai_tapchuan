@@ -750,7 +750,7 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
 
       print("status code editPost: ${response.statusCode}");
-      print("=== API Edit Post Response: ${response.body}");
+      // print("=== API Edit Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return EditPostResponse.fromJson(jsonDecode(response.body));
@@ -848,7 +848,7 @@ class ApiService {
     try {
       final response = await http.post(url, body: request.toJson());
       print("status code getListPosts: ${response.statusCode}");
-      print("=== API Get List Posts Response: ${response.body}");
+      //print("=== API Get List Posts Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return GetListPostsResponse.fromJson(jsonDecode(response.body));
