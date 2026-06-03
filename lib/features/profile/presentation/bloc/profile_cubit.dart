@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/user_profile_entity.dart';
-import '../../data/models/profile_mock_data.dart';
 import '../../../../services/api_service.dart';
+import '../../../feed/data/models/get_list_posts_models.dart';
 
 part 'profile_state.dart';
 
@@ -25,22 +25,23 @@ class ProfileCubit extends Cubit<ProfileState> {
           bio: data['description']?.toString() ?? '',
           location: 'Hà Nội, Việt Nam',
           link: 'github.com/profile',
+          isOnline: data['online'] == '1',
         );
 
-        final mockPosts = ProfileMockData.getUserPosts().map((post) {
-          return {
-            ...post,
-            'author': {
-              'id': userProfile.id,
-              'username': userProfile.name,
-              'avatar': userProfile.avatarUrl,
-            }
-          };
-        }).toList();
+        // Lấy danh sách bài viết
+        final targetUserId = userId ?? data['id']?.toString() ?? '';
+        final postResponse = await ApiService.getListPosts(
+          GetListPostsRequest(token: token, userId: targetUserId, index: '0', count: '100'), // Mặc định lấy nhiều chút cho profile
+        );
+
+        List<Map<String, dynamic>> userPosts = [];
+        if (postResponse.code == '1000' || postResponse.code == '200') {
+          userPosts = (postResponse.posts ?? []).map((e) => e as Map<String, dynamic>).toList();
+        }
 
         emit(ProfileLoaded(
           userProfile: userProfile,
-          userPosts: mockPosts,
+          userPosts: userPosts,
         ));
       } else {
         emit(ProfileError(message: result['message'] ?? 'Không thể tải thông tin trang cá nhân'));
@@ -94,13 +95,28 @@ class ProfileCubit extends Cubit<ProfileState> {
     return false;
   }
 
+  Future<bool> blockUser({required String token, required String userId}) async {
+    final currentState = state;
+    if (currentState is ProfileLoaded) {
+      try {
+        final result = await ApiService.setBlock(token, userId, '0');
+        if (result['code'] == '1000' || result['code'] == '200') {
+          return true;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   void toggleLikePost(String postId) {
     if (state is ProfileLoaded) {
       final currentState = state as ProfileLoaded;
       final updatedPosts = currentState.userPosts.map((post) {
         if (post['id'] == postId) {
-          final bool isLiked = post['isLiked'] ?? false;
-          int currentLikes = int.tryParse(post['like'].toString()) ?? 0;
+          final bool isLiked = (post['isLiked'] ?? false) || post['is_liked'] == '1';
+          int currentLikes = int.tryParse(post['like']?.toString() ?? '0') ?? 0;
           
           if (!isLiked) {
             currentLikes++;
@@ -112,6 +128,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           return {
             ...post,
             'isLiked': !isLiked,
+            'is_liked': !isLiked ? '1' : '0',
             'like': currentLikes.toString(),
           };
         }

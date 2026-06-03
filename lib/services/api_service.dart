@@ -17,6 +17,22 @@ import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_mod
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
 
+  static String _formatTimestamp(String timestamp) {
+    try {
+      DateTime date;
+      if (timestamp.contains('T') || timestamp.contains('-')) {
+        date = DateTime.parse(timestamp).toLocal();
+      } else {
+        double timestampDouble = double.parse(timestamp);
+        date = DateTime.fromMillisecondsSinceEpoch((timestampDouble * 1000).toInt());
+      }
+      String pad(int n) => n.toString().padLeft(2, '0');
+      return '${pad(date.day)}/${pad(date.month)}/${date.year} ${pad(date.hour)}:${pad(date.minute)}';
+    } catch (e) {
+      return timestamp; // Trả về nguyên gốc nếu lỗi
+    }
+  }
+
   static MediaType _getMediaType(String filename) {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.png')) return MediaType('image', 'png');
@@ -690,7 +706,13 @@ class ApiService {
       print("=== API Get Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetPostResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is Map) {
+          if (jsonResponse['data']['created'] != null) {
+            jsonResponse['data']['created'] = _formatTimestamp(jsonResponse['data']['created'].toString());
+          }
+        }
+        return GetPostResponse.fromJson(jsonResponse);
       } else {
         return GetPostResponse(
           code: '1001',
@@ -829,7 +851,23 @@ class ApiService {
       print("=== API Get Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetCommentResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        var rawData = jsonResponse['data'];
+        List? list;
+        if (rawData is List) {
+          list = rawData;
+        } else if (rawData is Map && rawData['data'] is List) {
+          list = rawData['data'];
+        }
+        
+        if (list != null) {
+          for (var comment in list) {
+            if (comment is Map && comment['created'] != null) {
+              comment['created'] = _formatTimestamp(comment['created'].toString());
+            }
+          }
+        }
+        return GetCommentResponse.fromJson(jsonResponse);
       } else {
         return GetCommentResponse(
           code: '1001',
@@ -851,7 +889,15 @@ class ApiService {
       //print("=== API Get List Posts Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetListPostsResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is Map && jsonResponse['data']['posts'] is List) {
+          for (var post in jsonResponse['data']['posts']) {
+            if (post is Map && post['created'] != null) {
+              post['created'] = _formatTimestamp(post['created'].toString());
+            }
+          }
+        }
+        return GetListPostsResponse.fromJson(jsonResponse);
       } else {
         return GetListPostsResponse(
           code: '1001',

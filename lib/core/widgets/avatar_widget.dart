@@ -37,20 +37,19 @@ class AvatarWidget extends StatelessWidget {
                 : Icon(Icons.person, size: radius, color: Colors.grey),
           ),
         ),
-        if (isOnline)
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: radius * 0.6,
-              height: radius * 0.6,
-              decoration: BoxDecoration(
-                color: AppColors.successGreen,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.surfaceWhite, width: 1.5),
-              ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: radius * 0.6,
+            height: radius * 0.6,
+            decoration: BoxDecoration(
+              color: isOnline ? AppColors.successGreen : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.dividerBorder, width: 1.5),
             ),
           ),
+        ),
       ],
     );
   }

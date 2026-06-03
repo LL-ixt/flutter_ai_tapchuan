@@ -7,6 +7,7 @@ import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/comment_stat
 import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_state.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/edit_post_models.dart';
+import 'package:flutter_ai_tapchuan/features/profile/presentation/pages/profile_screen.dart';
 import '../constants/color_constants.dart';
 import '../constants/text_style_constants.dart';
 import '../utils/dialog_utils.dart';
@@ -50,35 +51,61 @@ class PostCard extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     final author = postData['author'] ?? {};
+    final isOnline = postData['is_online'] == '1'; // Or logic if available
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          AvatarWidget(
-            imageUrl: author['avatar'] ?? '',
-            radius: 20,
-            isOnline: true,
+          GestureDetector(
+            onTap: () {
+              if (author['id'] != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(userId: author['id'].toString()),
+                  ),
+                );
+              }
+            },
+            child: AvatarWidget(
+              imageUrl: author['avatar'] ?? '',
+              radius: 20,
+              isOnline: isOnline,
+            ),
           ),
           const SizedBox(width: 8.0),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  author['username'] ?? 'Người dùng',
-                  style: AppTextStyles.nameHeading,
-                ),
-                Row(
-                  children: [
-                    Text(
-                      postData['created_at'] ?? 'Vừa xong',
-                      style: AppTextStyles.subtitle,
+            child: GestureDetector(
+              onTap: () {
+                if (author['id'] != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(userId: author['id'].toString()),
                     ),
-                    const SizedBox(width: 4.0),
-                    const Icon(Icons.public, size: 14, color: AppColors.textSecondary),
-                  ],
-                ),
-              ],
+                  );
+                }
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    author['username'] ?? 'Người dùng',
+                    style: AppTextStyles.nameHeading,
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        postData['created'] ?? 'Vừa xong',
+                        style: AppTextStyles.subtitle,
+                      ),
+                      const SizedBox(width: 4.0),
+                      const Icon(Icons.public, size: 14, color: AppColors.textSecondary),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           IconButton(
