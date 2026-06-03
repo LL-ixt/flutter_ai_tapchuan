@@ -18,11 +18,24 @@ class AvatarWidget extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: AppColors.dividerBorder,
-          backgroundImage: NetworkImage(imageUrl),
-          onBackgroundImageError: (context, error) => const Icon(Icons.person, color: Colors.grey),
+        Container(
+          width: radius * 2,
+          height: radius * 2,
+          decoration: const BoxDecoration(
+            color: AppColors.dividerBorder,
+            shape: BoxShape.circle,
+          ),
+          child: ClipOval(
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.person, size: radius, color: Colors.grey);
+                    },
+                  )
+                : Icon(Icons.person, size: radius, color: Colors.grey),
+          ),
         ),
         if (isOnline)
           Positioned(

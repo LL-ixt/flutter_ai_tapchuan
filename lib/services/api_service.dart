@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/add_post_models.dart';
@@ -11,7 +12,6 @@ import 'package:flutter_ai_tapchuan/features/post/data/models/comment_models.dar
 import 'package:flutter_ai_tapchuan/features/post/data/models/like_models.dart';
 import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_models.dart';
 
-
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
 class ApiService {
@@ -20,11 +20,11 @@ class ApiService {
   static MediaType _getMediaType(String filename) {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.png')) return MediaType('image', 'png');
-    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return MediaType('image', 'jpeg');
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg'))
+      return MediaType('image', 'jpeg');
     if (lower.endsWith('.mp4')) return MediaType('video', 'mp4');
     return MediaType('application', 'octet-stream');
   }
-
 
   static Map<String, String> _toRequestBody(Map<String, Object?> body) {
     final requestBody = <String, String>{};
@@ -202,22 +202,24 @@ class ApiService {
   // PHẦN CỦA QUÂN: 8 API (Search, Students, Courses, Blocks...)
   // =========================================================
 
-  // 1. API: TÌM KIẾM (search) 
+  // 1. API: TÌM KIẾM (search)
   static Future<Map<String, dynamic>> search(
-    String token, 
-    String keyword, 
-    String userId, 
-    int index, 
-    int count,
-    {String categoryId = "", String durationMin = "", String durationMax = ""}
-  ) async {
+    String token,
+    String keyword,
+    String userId,
+    int index,
+    int count, {
+    String categoryId = "",
+    String durationMin = "",
+    String durationMax = "",
+  }) async {
     final url = Uri.parse('$baseUrl/search');
     try {
       final response = await http.post(
         url,
         body: {
           'token': token,
-          'keyword': keyword.trim(), 
+          'keyword': keyword.trim(),
           'user_id': userId,
           'index': index.toString(),
           'count': count.toString(),
@@ -231,20 +233,23 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
 
-  // 2. API: LẤY LỊCH SỬ TÌM KIẾM (get_saved_search) 
+  // 2. API: LẤY LỊCH SỬ TÌM KIẾM (get_saved_search)
   static Future<Map<String, dynamic>> getSavedSearch(
-    String token, 
-    int index, 
-    int count, 
-    {String userId = ""} 
-  ) async {
+    String token,
+    int index,
+    int count, {
+    String userId = "",
+  }) async {
     final url = Uri.parse('$baseUrl/get_saved_search');
     try {
       final response = await http.post(
@@ -261,7 +266,10 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -270,38 +278,38 @@ class ApiService {
 
   // 3. API: XÓA LỊCH SỬ TÌM KIẾM (del_saved_search)
   static Future<Map<String, dynamic>> delSavedSearch(
-    String token, 
-    String searchId, 
-    String all
+    String token,
+    String searchId,
+    String all,
   ) async {
     final url = Uri.parse('$baseUrl/del_saved_search');
     try {
       final response = await http.post(
         url,
-        body: {
-          'token': token,
-          'search_id': searchId, 
-          'all': all,
-        },
+        body: {'token': token, 'search_id': searchId, 'all': all},
       );
       print("status code delSavedSearch: ${response.statusCode}");
       print("=== API Del Saved Search Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
-// 4. API: LẤY DANH SÁCH TOÀN BỘ HỌC VIÊN (get_list_students)
+
+  // 4. API: LẤY DANH SÁCH TOÀN BỘ HỌC VIÊN (get_list_students)
   static Future<Map<String, dynamic>> getListStudents(
-    String token, 
-    int index, 
-    int count,
-    {String userId = ""} 
-  ) async {
+    String token,
+    int index,
+    int count, {
+    String userId = "",
+  }) async {
     final url = Uri.parse('$baseUrl/get_list_students');
     try {
       final response = await http.post(
@@ -310,7 +318,7 @@ class ApiService {
           'token': token,
           'index': index.toString(),
           'count': count.toString(),
-          'user_id': userId, 
+          'user_id': userId,
         },
       );
       print("status code getListStudents: ${response.statusCode}");
@@ -318,83 +326,127 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
-  // 5. API: LẤY THÔNG TIN NGƯỜI DÙNG (get_user_info) 
+
+  // 5. API: LẤY THÔNG TIN NGƯỜI DÙNG (get_user_info)
   static Future<Map<String, dynamic>> getUserInfo({
-    required String token, 
-    String userId = ""}
-  ) async {
+    required String token,
+    String? userId,
+  }) async {
     final url = Uri.parse('$baseUrl/get_user_info');
     try {
-      final response = await http.post(
-        url,
-        body: {
-          'token': token,
-          'userId': userId, 
-        },
-      );
+      final body = <String, String>{'token': token};
+      if (userId != null && userId.isNotEmpty) {
+        body['userId'] = userId;
+      }
+      final response = await http.post(url, body: body);
       print("status code getUserInfo: ${response.statusCode}");
       print("=== API Get User Info Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
 
-  // 6. API: CẬP NHẬT THÔNG TIN NGƯỜI DÙNG (set_user_info) 
+  // 6. API: CẬP NHẬT THÔNG TIN NGƯỜI DÙNG (set_user_info)
   static Future<Map<String, dynamic>> setUserInfo(
-    String token, 
-    {String username = "", File? avatar, File? coverImage} 
-  ) async {
+    String token, {
+    String? username,
+    File? avatar,
+    Uint8List? avatarBytes,
+    String? avatarName,
+    File? coverImage,
+    Uint8List? coverImageBytes,
+    String? coverImageName,
+    String? description,
+  }) async {
     final url = Uri.parse('$baseUrl/set_user_info');
     try {
       var request = http.MultipartRequest('POST', url);
-      
+
       request.fields['token'] = token;
-      
-      if (username.isNotEmpty) {
-        request.fields['username'] = username.trim(); 
+
+      if (username != null && username.isNotEmpty) {
+        request.fields['username'] = username.trim();
+      }
+
+      if (description != null) {
+        request.fields['description'] = description.trim();
       }
 
       if (avatar != null) {
-        request.files.add(await http.MultipartFile.fromPath('avatar', avatar.path));
+        request.files.add(
+          await http.MultipartFile.fromPath('avatar', avatar.path),
+        );
+      } else if (avatarBytes != null) {
+        final filename = avatarName ?? 'avatar.jpg';
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'avatar',
+            avatarBytes,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       if (coverImage != null) {
-        request.files.add(await http.MultipartFile.fromPath('cover_image', coverImage.path));
+        request.files.add(
+          await http.MultipartFile.fromPath('coverImage', coverImage.path),
+        );
+      } else if (coverImageBytes != null) {
+        final filename = coverImageName ?? 'cover_image.jpg';
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'coverImage',
+            coverImageBytes,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       var streamedResponse = await request.send();
-      
+
       var response = await http.Response.fromStream(streamedResponse);
-      
+
       print("status code setUserInfo: ${response.statusCode}");
       print("=== API Set User Info Response: ${response.body}");
-      
-      if (response.statusCode == 200) {
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
-  // 7. API: LẤY DANH SÁCH KHÓA HỌC CỦA HỌC VIÊN (get_list_courses_of_student) 
+
+  // 7. API: LẤY DANH SÁCH KHÓA HỌC CỦA HỌC VIÊN (get_list_courses_of_student)
   static Future<Map<String, dynamic>> getListCoursesOfStudent(
-    String token, 
-    String userId, 
-    int index, 
-    int count
+    String token,
+    String userId,
+    int index,
+    int count,
   ) async {
     final url = Uri.parse('$baseUrl/get_list_courses_of_student');
     try {
@@ -402,7 +454,7 @@ class ApiService {
         url,
         body: {
           'token': token,
-          'user_id': userId, 
+          'user_id': userId,
           'index': index.toString(),
           'count': count.toString(),
         },
@@ -412,19 +464,23 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
   }
+
   // 8. API: LẤY DANH SÁCH BỊ CHẶN (get_list_blocks)
   static Future<Map<String, dynamic>> getListBlocks(
-    String token, 
-    int index, 
-    int count,
-    {String userId = ""} 
-  ) async {
+    String token,
+    int index,
+    int count, {
+    String userId = "",
+  }) async {
     final url = Uri.parse('$baseUrl/get_list_blocks');
     try {
       final response = await http.post(
@@ -441,7 +497,10 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -450,8 +509,8 @@ class ApiService {
 
   // 9. API: BLOCK/UNBLOCK USER (blocks)
   static Future<Map<String, dynamic>> setBlock(
-    String token, 
-    String userId, 
+    String token,
+    String userId,
     String type, // '0' = block, '1' = unblock (thường là thế)
   ) async {
     final url = Uri.parse('$baseUrl/set_block'); // Fix endpoint URL
@@ -464,18 +523,17 @@ class ApiService {
 
       final response = await http.post(
         url,
-        body: {
-          'token': token,
-          'userId': userId,
-          'type': apiType,
-        },
+        body: {'token': token, 'userId': userId, 'type': apiType},
       );
       print("status code setBlock: ${response.statusCode}");
       print("=== API Set Block Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -486,18 +544,16 @@ class ApiService {
   static Future<Map<String, dynamic>> getPushSettings(String token) async {
     final url = Uri.parse('$baseUrl/get_push_settings');
     try {
-      final response = await http.post(
-        url,
-        body: {
-          'token': token,
-        },
-      );
+      final response = await http.post(url, body: {'token': token});
       print("status code getPushSettings: ${response.statusCode}");
       print("=== API Get Push Settings Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -520,19 +576,19 @@ class ApiService {
     bool? ledOn,
   }) async {
     // API endpoint được sửa thành set_push_settings
-    final url = Uri.parse('$baseUrl/set_push_settings'); 
-    
+    final url = Uri.parse('$baseUrl/set_push_settings');
+
     // Yêu cầu của bạn là input on/off, tôi sẽ map bool -> "1"/"0" hoặc "on"/"off" tuỳ BE, nhưng thường BE nhận 1/0
     String toVal(bool? val) => val == true ? '1' : '0';
 
-    final body = <String, String>{
-      'token': token,
-    };
-    
+    final body = <String, String>{'token': token};
+
     if (likeComment != null) body['likeComment'] = toVal(likeComment);
     if (fromFriends != null) body['fromFriends'] = toVal(fromFriends);
-    if (requestedFriend != null) body['requestedFriend'] = toVal(requestedFriend);
-    if (suggestedFriend != null) body['suggestedFriend'] = toVal(suggestedFriend);
+    if (requestedFriend != null)
+      body['requestedFriend'] = toVal(requestedFriend);
+    if (suggestedFriend != null)
+      body['suggestedFriend'] = toVal(suggestedFriend);
     if (birthday != null) body['birthday'] = toVal(birthday);
     if (video != null) body['video'] = toVal(video);
     if (report != null) body['report'] = toVal(report);
@@ -548,7 +604,10 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -560,29 +619,43 @@ class ApiService {
     try {
       final req = http.MultipartRequest('POST', url);
       req.fields.addAll(request.toFields());
-      
+
       if (request.leftVideo != null) {
-        req.files.add(await http.MultipartFile.fromPath('left_video', request.leftVideo!.path));
+        req.files.add(
+          await http.MultipartFile.fromPath(
+            'left_video',
+            request.leftVideo!.path,
+          ),
+        );
       } else if (request.leftVideoBytes != null) {
         final filename = request.leftVideoName ?? 'left_video.mp4';
-        req.files.add(http.MultipartFile.fromBytes(
-          'left_video',
-          request.leftVideoBytes!,
-          filename: filename,
-          contentType: _getMediaType(filename),
-        ));
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            'left_video',
+            request.leftVideoBytes!,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       if (request.rightVideo != null) {
-        req.files.add(await http.MultipartFile.fromPath('right_video', request.rightVideo!.path));
+        req.files.add(
+          await http.MultipartFile.fromPath(
+            'right_video',
+            request.rightVideo!.path,
+          ),
+        );
       } else if (request.rightVideoBytes != null) {
         final filename = request.rightVideoName ?? 'right_video.mp4';
-        req.files.add(http.MultipartFile.fromBytes(
-          'right_video',
-          request.rightVideoBytes!,
-          filename: filename,
-          contentType: _getMediaType(filename),
-        ));
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            'right_video',
+            request.rightVideoBytes!,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       final streamedResponse = await req.send();
@@ -594,9 +667,15 @@ class ApiService {
       if (response.statusCode == 200) {
         return AddPostResponse.fromJson(jsonDecode(response.body));
       } else if (response.statusCode == 404) {
-        return AddPostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
+        return AddPostResponse(
+          code: '404',
+          message: 'API Endpoint chưa được định nghĩa trên Server',
+        );
       } else {
-        return AddPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return AddPostResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return AddPostResponse(code: '9999', message: 'Lỗi Exception: $e');
@@ -606,17 +685,17 @@ class ApiService {
   static Future<GetPostResponse> getPost(GetPostRequest request) async {
     final url = Uri.parse('$baseUrl/get_post');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code getPost: ${response.statusCode}");
       print("=== API Get Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return GetPostResponse.fromJson(jsonDecode(response.body));
       } else {
-        return GetPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return GetPostResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return GetPostResponse(code: '9999', message: 'Lỗi Exception: $e');
@@ -628,29 +707,43 @@ class ApiService {
     try {
       final req = http.MultipartRequest('POST', url);
       req.fields.addAll(request.toFields());
-      
+
       if (request.leftVideo != null) {
-        req.files.add(await http.MultipartFile.fromPath('left_video', request.leftVideo!.path));
+        req.files.add(
+          await http.MultipartFile.fromPath(
+            'left_video',
+            request.leftVideo!.path,
+          ),
+        );
       } else if (request.leftVideoBytes != null) {
         final filename = request.leftVideoName ?? 'left_video.mp4';
-        req.files.add(http.MultipartFile.fromBytes(
-          'left_video',
-          request.leftVideoBytes!,
-          filename: filename,
-          contentType: _getMediaType(filename),
-        ));
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            'left_video',
+            request.leftVideoBytes!,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       if (request.rightVideo != null) {
-        req.files.add(await http.MultipartFile.fromPath('right_video', request.rightVideo!.path));
+        req.files.add(
+          await http.MultipartFile.fromPath(
+            'right_video',
+            request.rightVideo!.path,
+          ),
+        );
       } else if (request.rightVideoBytes != null) {
         final filename = request.rightVideoName ?? 'right_video.mp4';
-        req.files.add(http.MultipartFile.fromBytes(
-          'right_video',
-          request.rightVideoBytes!,
-          filename: filename,
-          contentType: _getMediaType(filename),
-        ));
+        req.files.add(
+          http.MultipartFile.fromBytes(
+            'right_video',
+            request.rightVideoBytes!,
+            filename: filename,
+            contentType: _getMediaType(filename),
+          ),
+        );
       }
 
       final streamedResponse = await req.send();
@@ -662,91 +755,108 @@ class ApiService {
       if (response.statusCode == 200) {
         return EditPostResponse.fromJson(jsonDecode(response.body));
       } else if (response.statusCode == 404) {
-        return EditPostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
+        return EditPostResponse(
+          code: '404',
+          message: 'API Endpoint chưa được định nghĩa trên Server',
+        );
       } else {
-        return EditPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return EditPostResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return EditPostResponse(code: '9999', message: 'Lỗi Exception: $e');
     }
   }
 
-  static Future<DeletePostResponse> deletePost(DeletePostRequest request) async {
+  static Future<DeletePostResponse> deletePost(
+    DeletePostRequest request,
+  ) async {
     final url = Uri.parse('$baseUrl/delete_post');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code deletePost: ${response.statusCode}");
       print("=== API Delete Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return DeletePostResponse.fromJson(jsonDecode(response.body));
       } else if (response.statusCode == 404) {
-        return DeletePostResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
+        return DeletePostResponse(
+          code: '404',
+          message: 'API Endpoint chưa được định nghĩa trên Server',
+        );
       } else {
-        return DeletePostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return DeletePostResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return DeletePostResponse(code: '9999', message: 'Lỗi Exception: $e');
     }
   }
 
-  static Future<ReportPostResponse> reportPost(ReportPostRequest request) async {
+  static Future<ReportPostResponse> reportPost(
+    ReportPostRequest request,
+  ) async {
     final url = Uri.parse('$baseUrl/report_post');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code reportPost: ${response.statusCode}");
       print("=== API Report Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return ReportPostResponse.fromJson(jsonDecode(response.body));
       } else {
-        return ReportPostResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return ReportPostResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return ReportPostResponse(code: '9999', message: 'Lỗi Exception: $e');
     }
   }
 
-  static Future<GetCommentResponse> getComment(GetCommentRequest request) async {
+  static Future<GetCommentResponse> getComment(
+    GetCommentRequest request,
+  ) async {
     final url = Uri.parse('$baseUrl/get_comment');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code getComment: ${response.statusCode}");
       print("=== API Get Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return GetCommentResponse.fromJson(jsonDecode(response.body));
       } else {
-        return GetCommentResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return GetCommentResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return GetCommentResponse(code: '9999', message: 'Lỗi Exception: $e');
     }
   }
 
-  static Future<GetListPostsResponse> getListPosts(GetListPostsRequest request) async {
+  static Future<GetListPostsResponse> getListPosts(
+    GetListPostsRequest request,
+  ) async {
     final url = Uri.parse('$baseUrl/get_list_posts');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code getListPosts: ${response.statusCode}");
       print("=== API Get List Posts Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return GetListPostsResponse.fromJson(jsonDecode(response.body));
       } else {
-        return GetListPostsResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return GetListPostsResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return GetListPostsResponse(code: '9999', message: 'Lỗi Exception: $e');
@@ -756,39 +866,44 @@ class ApiService {
   static Future<LikeResponse> like(LikeRequest request) async {
     final url = Uri.parse('$baseUrl/like_post');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code like: ${response.statusCode}");
       print("=== API Like Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return LikeResponse.fromJson(jsonDecode(response.body));
       } else if (response.statusCode == 404) {
-        return LikeResponse(code: '404', message: 'API Endpoint chưa được định nghĩa trên Server');
+        return LikeResponse(
+          code: '404',
+          message: 'API Endpoint chưa được định nghĩa trên Server',
+        );
       } else {
-        return LikeResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return LikeResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return LikeResponse(code: '9999', message: 'Lỗi Exception: $e');
     }
   }
 
-  static Future<SetCommentResponse> setComment(SetCommentRequest request) async {
+  static Future<SetCommentResponse> setComment(
+    SetCommentRequest request,
+  ) async {
     final url = Uri.parse('$baseUrl/set_comment');
     try {
-      final response = await http.post(
-        url,
-        body: request.toJson(),
-      );
+      final response = await http.post(url, body: request.toJson());
       print("status code setComment: ${response.statusCode}");
       print("=== API Set Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return SetCommentResponse.fromJson(jsonDecode(response.body));
       } else {
-        return SetCommentResponse(code: '1001', message: 'Không thể kết nối Internet hoặc Server lỗi');
+        return SetCommentResponse(
+          code: '1001',
+          message: 'Không thể kết nối Internet hoặc Server lỗi',
+        );
       }
     } catch (e) {
       return SetCommentResponse(code: '9999', message: 'Lỗi Exception: $e');
@@ -916,6 +1031,37 @@ class ApiService {
       'token': token,
       'notificationId': notificationId,
     });
+  }
+
+  static Future<Map<String, dynamic>> changePassword(
+    String token,
+    String password,
+    String newPassword,
+  ) async {
+    final url = Uri.parse('$baseUrl/change_password');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+        body: {
+          'token': token,
+          'password': password,
+          'newPassword': newPassword,
+        },
+      );
+      print("status code changePassword: ${response.statusCode}");
+      print("=== API Change Password Response: ${response.body}");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
   }
 
   static Future<Map<String, dynamic>> set_devtoken(
@@ -1104,5 +1250,74 @@ class ApiService {
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
     }
+  }
+
+  static Future<Map<String, dynamic>> checkNewVersion({
+    required String token,
+    required String lastUpdate,
+    required String userId,
+  }) async {
+    final url = Uri.parse('$baseUrl/check_new_version');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'last_update': lastUpdate,
+          'user_id': userId,
+        },
+      );
+      print("status code checkNewVersion: ${response.statusCode}");
+      print("=== API Check New Version Response: ${response.body}");
+      try {
+        return jsonDecode(response.body);
+      } catch (_) {
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> change_password(
+    String token,
+    String password,
+    String newPassword,
+  ) {
+    return changePassword(token, password, newPassword);
+  }
+
+  static Future<Map<String, dynamic>> get_user_info({
+    required String token,
+    String? userId,
+  }) {
+    return getUserInfo(token: token, userId: userId);
+  }
+
+  static Future<Map<String, dynamic>> set_user_info(
+    String token, {
+    String? username,
+    File? avatar,
+    Uint8List? avatarBytes,
+    String? avatarName,
+    File? coverImage,
+    Uint8List? coverImageBytes,
+    String? coverImageName,
+    String? description,
+  }) {
+    return setUserInfo(
+      token,
+      username: username,
+      avatar: avatar,
+      avatarBytes: avatarBytes,
+      avatarName: avatarName,
+      coverImage: coverImage,
+      coverImageBytes: coverImageBytes,
+      coverImageName: coverImageName,
+      description: description,
+    );
   }
 }

@@ -231,7 +231,16 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Row(
           children: [
-            CircleAvatar(radius: 40, backgroundImage: NetworkImage(req['avatar'])),
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: req['avatar'] != null && req['avatar'].toString().isNotEmpty
+                  ? NetworkImage(req['avatar'].toString())
+                  : null,
+              onBackgroundImageError: req['avatar'] != null && req['avatar'].toString().isNotEmpty
+                  ? (exception, stackTrace) {}
+                  : null,
+              child: const Icon(Icons.person, size: 40, color: Colors.grey),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -259,7 +268,16 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 40, backgroundImage: NetworkImage(req['avatar'])),
+          CircleAvatar(
+            radius: 40,
+            backgroundImage: req['avatar'] != null && req['avatar'].toString().isNotEmpty
+                ? NetworkImage(req['avatar'].toString())
+                : null,
+            onBackgroundImageError: req['avatar'] != null && req['avatar'].toString().isNotEmpty
+                ? (exception, stackTrace) {}
+                : null,
+            child: const Icon(Icons.person, size: 40, color: Colors.grey),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

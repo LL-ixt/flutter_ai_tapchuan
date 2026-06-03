@@ -34,13 +34,11 @@ class AuthCubit extends Cubit<AuthState> {
         // 2. Bắn trạng thái thành công kèm theo data thật
         emit(
           AuthState.success(
-          
             username: fetchedName,
-         
             role: fetchedRole,
-         
             token: fetchedToken,
-            userId: fetchedId
+            userId: fetchedId,
+            avatar: fetchedAvatar,
           ),
         );
       } else {
