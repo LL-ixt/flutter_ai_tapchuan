@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_ai_tapchuan/features/post/data/models/add_post_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/get_post_models.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/edit_post_models.dart';
@@ -16,6 +17,23 @@ import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_mod
 
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
+
+  static Future<bool> checkInternet() async {
+    try {
+      if (kIsWeb) {
+        final response = await http
+            .head(Uri.parse(baseUrl))
+            .timeout(const Duration(seconds: 2));
+        return true;
+      } else {
+        final result = await InternetAddress.lookup('google.com')
+            .timeout(const Duration(seconds: 2));
+        return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      }
+    } catch (_) {
+      return false;
+    }
+  }
 
   static MediaType _getMediaType(String filename) {
     final lower = filename.toLowerCase();
@@ -62,6 +80,17 @@ class ApiService {
     String phone,
     String password,
   ) async {
+    final hasConnection = await checkInternet();
+    if (!hasConnection) {
+      return {
+        'code': '1001',
+        'message': 'Không có kết nối Internet. Vui lòng kiểm tra lại mạng.',
+      };
+    }
+
+
+
+
     final url = Uri.parse('$baseUrl/login');
     //print("=== APIService.login called with phone: $phone ==="); // Debug log
     try {
@@ -73,7 +102,7 @@ class ApiService {
           'devtoken': 'mock_device',
           //'uuid': 'mock_device',//await DeviceUtils.getHashedDeviceID(),
         },
-      );
+      ).timeout(const Duration(seconds: 10));
       print("status code login: ${response.statusCode}"); // Debug log
       print("=== API Login Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
@@ -95,6 +124,18 @@ class ApiService {
     String password,
     String role,
   ) async {
+    final hasConnection = await checkInternet();
+    if (!hasConnection) {
+      return {
+        'code': '1001',
+        'message': 'Không có kết nối Internet. Vui lòng kiểm tra lại mạng.',
+      };
+    }
+
+
+
+
+
     //print("=== APIService.signup called with phone: $phone, role: $role ==="); // Debug log
     final url = Uri.parse('$baseUrl/signup');
     try {
@@ -106,7 +147,7 @@ class ApiService {
           'uuid': 'mock_device', //await DeviceUtils.getHashedDeviceID(),
           'role': role,
         },
-      );
+      ).timeout(const Duration(seconds: 10));
       print("status code signup: ${response.statusCode}"); // Debug log
       print("=== API Signup Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {

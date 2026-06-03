@@ -48,6 +48,9 @@ class _CreatePostView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final authState = context.read<AuthCubit>().state;
+        final currentUsername = authState.username ?? "Người dùng";
+        final currentAvatar = authState.avatar ?? "";
         final isLoading = state is PostLoading;
         bool canSubmit = false;
         if (state is PostInitial) {
@@ -67,9 +70,12 @@ class _CreatePostView extends StatelessWidget {
             centerTitle: true,
             actions: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 child: ElevatedButton(
-                  onPressed: (canSubmit && !isLoading) 
+                  onPressed: (canSubmit && !isLoading)
                       ? () {
                           final token = context.read<AuthCubit>().state.token;
                           context.read<PostCubit>().submitPost(token: token);
@@ -85,12 +91,19 @@ class _CreatePostView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  child: isLoading 
+                  child: isLoading
                       ? const SizedBox(
-                          width: 16, 
-                          height: 16, 
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Đăng', style: TextStyle(fontWeight: FontWeight.bold)),
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Đăng',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
@@ -104,29 +117,37 @@ class _CreatePostView extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AvatarWidget(
-                      imageUrl: 'https://i.pravatar.cc/150?img=60',
-                      radius: 24,
-                    ),
+                    AvatarWidget(imageUrl: currentAvatar, radius: 24),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Nguyễn Tiến Thành', style: AppTextStyles.nameHeading),
+                        Text(currentUsername, style: AppTextStyles.nameHeading),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.public, size: 14, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.public,
+                                size: 14,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 4),
                               Text('Công khai', style: AppTextStyles.subtitle),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
                             ],
                           ),
                         ),
@@ -135,20 +156,24 @@ class _CreatePostView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Hàng 2: TextField
                 Expanded(
                   child: TextField(
-                    onChanged: (text) => context.read<PostCubit>().updateText(text),
+                    onChanged: (text) =>
+                        context.read<PostCubit>().updateText(text),
                     maxLines: null,
                     decoration: InputDecoration(
                       hintText: 'Bạn đang nghĩ gì?',
-                      hintStyle: AppTextStyles.heading1.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.normal),
+                      hintStyle: AppTextStyles.heading1.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.normal,
+                      ),
                       border: InputBorder.none,
                     ),
                   ),
                 ),
-                
+
                 // Hàng 3: Chọn Video
                 if (state is PostInitial)
                   Row(
@@ -158,8 +183,10 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           file: state.leftVideoFile,
                           label: 'Chọn Video Trái',
-                          onTap: () => context.read<PostCubit>().pickLeftVideo(),
-                          onRemove: () => context.read<PostCubit>().removeLeftVideo(),
+                          onTap: () =>
+                              context.read<PostCubit>().pickLeftVideo(),
+                          onRemove: () =>
+                              context.read<PostCubit>().removeLeftVideo(),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -168,8 +195,10 @@ class _CreatePostView extends StatelessWidget {
                           context: context,
                           file: state.rightVideoFile,
                           label: 'Chọn Video Phải',
-                          onTap: () => context.read<PostCubit>().pickRightVideo(),
-                          onRemove: () => context.read<PostCubit>().removeRightVideo(),
+                          onTap: () =>
+                              context.read<PostCubit>().pickRightVideo(),
+                          onRemove: () =>
+                              context.read<PostCubit>().removeRightVideo(),
                         ),
                       ),
                     ],
@@ -206,7 +235,11 @@ class _CreatePostView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Center(
-                  child: Icon(Icons.video_library, color: AppColors.primaryBlue, size: 48),
+                  child: Icon(
+                    Icons.video_library,
+                    color: AppColors.primaryBlue,
+                    size: 48,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -214,12 +247,18 @@ class _CreatePostView extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$sizeMb MB',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -255,9 +294,18 @@ class _CreatePostView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.video_library, color: AppColors.primaryIconAction, size: 40),
+            const Icon(
+              Icons.video_library,
+              color: AppColors.primaryIconAction,
+              size: 40,
+            ),
             const SizedBox(height: 8),
-            Text(label, style: AppTextStyles.buttonText.copyWith(color: AppColors.primaryIconAction)),
+            Text(
+              label,
+              style: AppTextStyles.buttonText.copyWith(
+                color: AppColors.primaryIconAction,
+              ),
+            ),
           ],
         ),
       ),

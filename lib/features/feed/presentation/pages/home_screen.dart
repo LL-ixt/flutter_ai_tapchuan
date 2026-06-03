@@ -20,9 +20,7 @@ class HomeScreen extends StatelessWidget {
     final authState = context.read<AuthCubit>().state;
     // Inject BLoC ở cấp cao nhất của màn hình này
     return BlocProvider(
-      create: (context) => FeedCubit()..fetchPosts(
-        token: authState.token,
-      ),
+      create: (context) => FeedCubit()..fetchPosts(token: authState.token),
       child: const _HomeView(),
     );
   }
@@ -33,6 +31,9 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthCubit>().state;
+    final currentUsername = authState.username ?? "";
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: CustomScrollView(
@@ -40,14 +41,32 @@ class _HomeView extends StatelessWidget {
           // Social SliverAppBar
           SliverAppBar(
             backgroundColor: AppColors.surfaceWhite,
-            title: const Text(
-              'EduSocial AI',
-              style: TextStyle(
-                color: AppColors.primaryBlue,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -1.0,
-              ),
+            toolbarHeight: 72,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'EduSocial AI',
+                  style: TextStyle(
+                    color: AppColors.primaryBlue,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -1.0,
+                  ),
+                ),
+                if (currentUsername.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Hi $currentUsername',
+                    style: const TextStyle(
+                      color: AppColors.primaryBlue,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
             ),
             floating: true,
             actions: [
@@ -170,7 +189,10 @@ class _HomeView extends StatelessWidget {
                       isLiked: post['isLiked'] ?? false,
                       onLikeToggle: () {
                         final token = context.read<AuthCubit>().state.token;
-                        context.read<FeedCubit>().toggleLike(post['id'], token: token);
+                        context.read<FeedCubit>().toggleLike(
+                          post['id'],
+                          token: token,
+                        );
                       },
                     );
                   }, childCount: state.posts.length),

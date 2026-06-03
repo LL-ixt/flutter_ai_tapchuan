@@ -35,10 +35,10 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       setState(() => _isSubmitting = true);
-      
+
       // Gọi API Signup
       final result = await ApiService.signup(
-        _phoneController.text, 
+        _phoneController.text,
         _passwordController.text,
         _selectedRole,
       );
@@ -55,7 +55,10 @@ class _SignupScreenState extends State<SignupScreen> {
           onConfirm: () {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => VerifyScreen(phoneNumber: _phoneController.text)),
+              MaterialPageRoute(
+                builder: (context) =>
+                    VerifyScreen(phoneNumber: _phoneController.text),
+              ),
               (route) => false,
             );
           },
@@ -111,16 +114,30 @@ class _SignupScreenState extends State<SignupScreen> {
                   hintText: "Nhập số điện thoại (10 số)",
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Vui lòng nhập số điện thoại';
+                    }
+                    return null;
+                  },
                 ),
                 InputBox(
                   label: "Mật khẩu mới",
                   hintText: "Mật khẩu (6-10 ký tự)",
                   controller: _passwordController,
                   obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Vui lòng nhập mật khẩu';
+                    }
+                    return null;
+                  },
                 ),
                 Text(
                   "Bạn là:",
-                  style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 RoleRadioGroup(
                   selectedRole: _selectedRole,

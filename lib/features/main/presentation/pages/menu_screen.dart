@@ -22,19 +22,24 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       // Chỉ kích hoạt hàm bên dưới khi token chuyển từ "có" sang "null" (đã logout thành công)
-      listenWhen: (previous, current) => previous.token != null && current.token == null,
+      listenWhen: (previous, current) =>
+          previous.token != null && current.token == null,
       listener: (context, state) {
-        debugPrint("Đã xóa sạch Token trong Cubit. Tiến hành chuyển hướng về LoginScreen...");
-        
+        debugPrint(
+          "Đã xóa sạch Token trong Cubit. Tiến hành chuyển hướng về LoginScreen...",
+        );
+
         // 2. THỰC HIỆN ĐIỀU HƯỚNG VÀ XÓA TOÀN BỘ STACK MÀN HÌNH CŨ
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false, // (route) => false có nghĩa là xóa sạch mọi màn hình trước đó, không cho Back lại
+          (route) =>
+              false, // (route) => false có nghĩa là xóa sạch mọi màn hình trước đó, không cho Back lại
         );
       },
       child: Scaffold(
-        backgroundColor: AppColors.scaffoldBackground, // Nền xám nhạt như Facebook
+        backgroundColor:
+            AppColors.scaffoldBackground, // Nền xám nhạt như Facebook
         body: CustomScrollView(
           slivers: [
             // 1. AppBar đồng bộ với HomeScreen
@@ -84,7 +89,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             children: [
                               // HIỂN THỊ USERNAME THẬT TỪ SERVER Ở ĐÂY
                               Text(
-                                currentUsername, 
+                                currentUsername,
                                 style: const TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 18,
@@ -93,17 +98,26 @@ class _MenuScreenState extends State<MenuScreen> {
                               ),
                               const SizedBox(height: 4.0),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: currentRole == 'GV' 
-                                      ? AppColors.primaryBlue.withValues(alpha: 0.1)
+                                  color: currentRole == 'GV'
+                                      ? AppColors.primaryBlue.withValues(
+                                          alpha: 0.1,
+                                        )
                                       : Colors.orange.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  currentRole == 'GV' ? "Giáo viên" : "Học viên",
+                                  currentRole == 'GV'
+                                      ? "Giáo viên"
+                                      : "Học viên",
                                   style: TextStyle(
-                                    color: currentRole == 'GV' ? AppColors.primaryBlue : Colors.orange,
+                                    color: currentRole == 'GV'
+                                        ? AppColors.primaryBlue
+                                        : Colors.orange,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -125,38 +139,103 @@ class _MenuScreenState extends State<MenuScreen> {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.settings, color: Colors.black87),
-                      title: const Text('Cài đặt thông báo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      leading: const Icon(
+                        Icons.settings,
+                        color: Colors.black87,
+                      ),
+                      title: const Text(
+                        'Cài đặt thông báo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey,
+                      ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsScreen(),
+                          ),
+                        );
                       },
                     ),
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.lock_outline, color: Colors.black87),
-                      title: const Text('Đổi mật khẩu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      leading: const Icon(
+                        Icons.lock_outline,
+                        color: Colors.black87,
+                      ),
+                      title: const Text(
+                        'Đổi mật khẩu',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey,
+                      ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChangePasswordScreen(),
+                          ),
+                        );
                       },
                     ),
                     const Divider(),
                     ListTile(
                       leading: const Icon(Icons.block, color: Colors.black87),
-                      title: const Text('Danh sách chặn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      title: const Text(
+                        'Danh sách chặn',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey,
+                      ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const BlockedUsersScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BlockedUsersScreen(),
+                          ),
+                        );
                       },
                     ),
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.bug_report_outlined, color: Colors.black87),
-                      title: const Text('Test Get User Info', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      leading: const Icon(
+                        Icons.bug_report_outlined,
+                        color: Colors.black87,
+                      ),
+                      title: const Text(
+                        'Test Get User Info',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey,
+                      ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const TestUserInfoScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TestUserInfoScreen(),
+                          ),
+                        );
                       },
                     ),
                     const Divider(),
@@ -168,9 +247,13 @@ class _MenuScreenState extends State<MenuScreen> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 24.0,
+                ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end, // Đẩy nút xuống cuối màn hình
+                  mainAxisAlignment:
+                      MainAxisAlignment.end, // Đẩy nút xuống cuối màn hình
                   children: [
                     InkWell(
                       onTap: () {
@@ -183,8 +266,12 @@ class _MenuScreenState extends State<MenuScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         // Copy định dạng nút "Xem thêm" (Màu xám nhạt đục)
                         decoration: BoxDecoration(
-                          color: const Color(0xffe4e6eb).withValues(alpha: 0.1),
+                          color: const Color(0xFFE4E6EB),
                           borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.0,
+                          ),
                         ),
                         child: const Center(
                           child: Text(
@@ -204,7 +291,7 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
           ],
         ),
-      )
+      ),
     );
   }
 }
