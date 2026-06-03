@@ -202,7 +202,7 @@ class _SearchPageViewState extends State<_SearchPageView> {
             child: CircularProgressIndicator(),
           );
         } else if (state is SearchLoaded) {
-          final results = state.results;
+          final results = (state.results['posts'] as List<dynamic>?) ?? [];
 
           if (results.isEmpty) {
             return Center(

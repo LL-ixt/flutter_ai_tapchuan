@@ -31,14 +31,29 @@ class _AllStudentsScreenState extends State<AllStudentsScreen> {
     final token = context.read<AuthCubit>().state.token ?? "mock_token";
     final response = await ApiService.getListStudents(token, 0, 50);
 
+    // Response mẫu
+    // {
+    //   "code": "1000",
+    //   "message": "OK",
+    //   "data": {
+    //     "total": "1",
+    //     "students": [
+    //       {"id": "", "name": "", "avatar": ""}
+    //     ]
+    //   }
+    // }
     if (response['code'] == '1000') {
-      final List<dynamic> data = response['data'] ?? [];
+      final Map<String, dynamic> responseData = response['data'] ?? {};
+      final List<dynamic> data = responseData['students'] ?? [];
       setState(() {
-        students = data.map((e) => {
-          "id": e['id']?.toString() ?? "",
-          "name": e['username'] ?? "Không tên",
-          "mutual": "0", // Backend có thể chưa hỗ trợ mutual
-          "avatar": e['avatar'] ?? "https://i.pravatar.cc/150",
+        students = data.map((e) {
+          final avatar = e['avatar']?.toString();
+          return {
+            "id": e['id']?.toString() ?? "",
+            "name": e['user_name'] ?? e['name'] ?? "Không tên",
+            "mutual": "0", // Backend có thể chưa hỗ trợ mutual
+            "avatar": (avatar != null && avatar.trim().isNotEmpty) ? avatar : "https://i.pravatar.cc/150",
+          };
         }).toList();
         isLoading = false;
       });

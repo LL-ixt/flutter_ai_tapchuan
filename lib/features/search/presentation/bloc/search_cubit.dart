@@ -31,7 +31,7 @@ class SearchCubit extends Cubit<SearchState> {
       );
 
       if (response['code'] == '1000') {
-        final data = response['data'] as List? ?? [];
+        final data = response['data'] as Map<String, dynamic>? ?? {};
         emit(SearchLoaded(data));
       } else {
         emit(SearchError(response['message'] ?? 'Lỗi tìm kiếm'));

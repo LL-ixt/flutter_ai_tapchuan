@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/course/presentation/pages/all_students_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../services/api_service.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../search/search_page.dart';
 
 class CourseRequestTab extends StatefulWidget {
@@ -12,10 +14,56 @@ class CourseRequestTab extends StatefulWidget {
 }
 
 class _CourseRequestTabState extends State<CourseRequestTab> {
-  List<Map<String, dynamic>> requests = [
-    {"id": "1", "name": "Nguyễn Chung Thủy", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=11", "status": "pending", "isBlocked": false},
-    {"id": "2", "name": "Thắng Xuân Vũ", "time": "2 năm", "avatar": "https://i.pravatar.cc/150?img=12", "status": "pending", "isBlocked": false},
-  ];
+  List<Map<String, dynamic>> requests = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequests();
+  }
+
+  Future<void> _fetchRequests() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final token = context.read<AuthCubit>().state.token ?? "";
+    final response = await ApiService.getRequestedEnrollment(token, 0, 20);
+
+    if (response['code'] == '1000') {
+      final Map<String, dynamic> responseData = response['data'] ?? {};
+      final List<dynamic> data = responseData['data'] ?? [];
+      
+      setState(() {
+        requests = data.map((e) {
+          final requestObj = e['request'] ?? {};
+          final id = requestObj['id']?.toString() ?? "";
+          final name = requestObj['user_name'] ?? "Không tên";
+          final avatar = requestObj['avatar']?.toString();
+          
+          return {
+            "id": id,
+            "name": name,
+            "time": "Gần đây",
+            "avatar": (avatar != null && avatar.trim().isNotEmpty) ? avatar : "https://i.pravatar.cc/150",
+            "status": "pending",
+            "isBlocked": false,
+          };
+        }).toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Lỗi tải danh sách yêu cầu.')),
+        );
+      }
+    }
+  }
 
   void _showConfirmDialog(String title, String content, VoidCallback onConfirm) {
     showDialog(
@@ -70,11 +118,11 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
 
   Future<void> _handleBlockAction(String userId, String type, int index) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    // Token thực tế sẽ lấy từ SharedPreferences/AuthBloc, ở đây dùng tạm 'mock_token'
-    final result = await ApiService.setBlock("mock_token", userId, type);
+    final token = context.read<AuthCubit>().state.token ?? "";
+    final result = await ApiService.setBlock(token, userId, type);
     
-    // Giả sử mã 1000 là success (theo chuẩn API của app này)
-    if (result['code'] == '1000' || result['code'] == '200' || result['code'] == 1000 || result['code'] == 200) {
+    // Giả sử mã 1000 là success
+    if (result['code'] == '1000' || result['code'] == '200') {
       scaffoldMessenger.showSnackBar(SnackBar(content: Text('Đã ${type == 'block' ? 'chặn' : 'bỏ chặn'} người dùng')));
       if (mounted) {
         setState(() {
@@ -86,30 +134,46 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
     }
   }
 
+  Future<void> _handleApprove(String userId, String isAccept, int index) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final token = context.read<AuthCubit>().state.token ?? "";
+    
+    final result = await ApiService.setApproveEnrollment(token, userId, isAccept);
+
+    if (result['code'] == '1000' || result['code'] == '200') {
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(isAccept == '1' ? 'Đã chấp nhận yêu cầu' : 'Đã từ chối yêu cầu')));
+      if (mounted) {
+        setState(() {
+          if (isAccept == '1') {
+            requests.removeAt(index);
+          } else {
+            requests[index]['status'] = 'removed';
+          }
+        });
+      }
+    } else {
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Lỗi: ${result['message']}')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Đếm số lượng yêu cầu đang ở trạng thái pending
     int pendingCount = requests.where((r) => r['status'] == 'pending').length;
 
     return Scaffold(
       backgroundColor: AppColors.surfaceWhite,
       body: RefreshIndicator(
         color: AppColors.primaryBlue,
-        onRefresh: () async {
-          // Giả lập thời gian load API mất 1 giây
-          await Future.delayed(const Duration(seconds: 1));
-          setState(() {
-            requests.removeWhere((req) => req['status'] == 'removed');
-          });
-        },
-        child: SingleChildScrollView(
+        onRefresh: _fetchRequests,
+        child: isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(), 
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Tiêu đề và Search
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -126,8 +190,6 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // 2. Nút Tất cả học viên
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => const AllStudentsScreen()));
@@ -143,17 +205,13 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                   padding: EdgeInsets.symmetric(vertical: 12.0),
                   child: Divider(thickness: 1, color: Colors.black12),
                 ),
-
-                // 3. Header danh sách
                 Row(
                   children: [
-                    const Text('Lời mời kết bạn ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+                    const Text('Yêu cầu mới ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
                     Text('$pendingCount', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // 4. In danh sách
                 ...requests.asMap().entries.map((entry) {
                   int index = entry.key;
                   Map<String, dynamic> req = entry.value;
@@ -167,9 +225,7 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
     );
   }
 
-  // Hàm vẽ từng dòng học viên
   Widget _buildRequestItem(Map<String, dynamic> req, int index) {
-    // NẾU ĐÃ GỠ: Hiển thị giao diện rút gọn "Đã gỡ lời mời"
     if (req['status'] == 'removed') {
       return Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
@@ -198,7 +254,6 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
       );
     }
 
-    // NẾU CHƯA GỠ (pending): Hiển thị giao diện đầy đủ 2 nút
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -227,9 +282,7 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                             'Chấp nhận yêu cầu',
                             'Bạn có đồng ý cho ${req['name']} tham gia khóa học không?',
                             () {
-                              setState(() {
-                                requests.removeAt(index);
-                              });
+                              _handleApprove(req['id'], '1', index);
                             }
                           );
                         },
@@ -242,17 +295,15 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
                       child: ElevatedButton(
                         onPressed: () {
                           _showConfirmDialog(
-                            'Xóa yêu cầu',
+                            'Từ chối yêu cầu',
                             'Gỡ lời mời từ ${req['name']}?',
                             () {
-                              setState(() {
-                                requests[index]['status'] = 'removed';
-                              });
+                              _handleApprove(req['id'], '0', index);
                             }
                           );
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[200], elevation: 0),
-                        child: const Text('Xóa', style: TextStyle(color: Colors.black)),
+                        child: const Text('Từ chối', style: TextStyle(color: Colors.black)),
                       ),
                     ),
                     IconButton(
