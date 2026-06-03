@@ -25,6 +25,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           bio: data['description']?.toString() ?? '',
           location: 'Hà Nội, Việt Nam',
           link: 'github.com/profile',
+          role: data['role']?.toString() ?? '',
           isOnline: data['online'] == '1',
         );
 

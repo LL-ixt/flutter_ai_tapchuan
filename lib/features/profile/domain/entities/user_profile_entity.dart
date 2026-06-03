@@ -6,6 +6,7 @@ class UserProfileEntity {
   final String bio;
   final String location;
   final String link;
+  final String role;
   final bool isOnline;
 
   UserProfileEntity({
@@ -16,6 +17,7 @@ class UserProfileEntity {
     required this.bio,
     required this.location,
     required this.link,
+    this.role = '',
     this.isOnline = false,
   });
 
@@ -27,6 +29,7 @@ class UserProfileEntity {
     String? bio,
     String? location,
     String? link,
+    String? role,
     bool? isOnline,
   }) {
     return UserProfileEntity(
@@ -37,6 +40,7 @@ class UserProfileEntity {
       bio: bio ?? this.bio,
       location: location ?? this.location,
       link: link ?? this.link,
+      role: role ?? this.role,
       isOnline: isOnline ?? this.isOnline,
     );
   }
