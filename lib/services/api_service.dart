@@ -1015,4 +1015,62 @@ class ApiService {
   ) {
     return setReadNotification(token, notificationId);
   }
+  static Future<Map<String, dynamic>> changePassword(
+    String token,
+    String password,
+    String newPassword,
+  ) async {
+    final url = Uri.parse('$baseUrl/change_password');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'password': password,
+          'newPassword': newPassword,
+        },
+      );
+      print("status code changePassword: ${response.statusCode}");
+      print("=== API Change Password Response: ${response.body}");
+      try {
+        return jsonDecode(response.body);
+      } catch (_) {
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+  static Future<Map<String, dynamic>> checkNewVersion({
+    required String token,
+    required String lastUpdate,
+    required String userId,
+  }) async {
+    final url = Uri.parse('$baseUrl/check_new_version');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'last_update': lastUpdate,
+          'user_id': userId,
+        },
+      );
+      print("status code checkNewVersion: ${response.statusCode}");
+      print("=== API Check New Version Response: ${response.body}");
+      try {
+        return jsonDecode(response.body);
+      } catch (_) {
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
 }
