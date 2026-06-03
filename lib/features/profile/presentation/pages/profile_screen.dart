@@ -159,7 +159,9 @@ class _ProfileView extends StatelessWidget {
                                     : (user.avatarUrl.isNotEmpty
                                         ? NetworkImage(user.avatarUrl) as ImageProvider
                                         : null),
-                                onBackgroundImageError: (exception, stackTrace) {},
+                                onBackgroundImageError: (newAvatarFile != null || user.avatarUrl.isNotEmpty)
+                                    ? (exception, stackTrace) {}
+                                    : null,
                                 child: (newAvatarFile == null && user.avatarUrl.isEmpty)
                                     ? const Icon(Icons.person, size: 45, color: Colors.grey)
                                     : null,
@@ -340,6 +342,9 @@ class _ProfileView extends StatelessWidget {
   }
 
   Widget _buildProfileHeader(BuildContext context, UserProfileEntity user) {
+    final currentUserId = context.read<AuthCubit>().state.userId;
+    final isOtherUser = userId != null && userId != currentUserId;
+
     return SliverToBoxAdapter(
       child: Container(
         color: AppColors.surfaceWhite,
@@ -436,28 +441,29 @@ class _ProfileView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   // Edit Profile Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _showEditProfileSheet(context, user),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.dividerBorder.withValues(alpha: 0.3),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  if (!isOtherUser)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => _showEditProfileSheet(context, user),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.dividerBorder.withValues(alpha: 0.3),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      child: const Text(
-                        'Chỉnh sửa trang cá nhân',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                        child: const Text(
+                          'Chỉnh sửa trang cá nhân',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 16),
                 ],
               ),
