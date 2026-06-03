@@ -13,20 +13,22 @@ import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_cubit.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final String? userId;
+  const ProfileScreen({super.key, this.userId});
 
   @override
   Widget build(BuildContext context) {
     final token = context.read<AuthCubit>().state.token ?? "";
     return BlocProvider(
-      create: (context) => ProfileCubit()..loadProfileData(token: token),
-      child: const _ProfileView(),
+      create: (context) => ProfileCubit()..loadProfileData(token: token, userId: userId),
+      child: _ProfileView(userId: userId),
     );
   }
 }
 
 class _ProfileView extends StatelessWidget {
-  const _ProfileView();
+  final String? userId;
+  const _ProfileView({this.userId});
 
   void _showEditProfileSheet(BuildContext context, UserProfileEntity user) {
     final nameController = TextEditingController(text: user.name);
@@ -85,7 +87,7 @@ class _ProfileView extends StatelessWidget {
                       const SizedBox(height: 8),
                       GestureDetector(
                         onTap: () async {
-                          final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                          final result = await FilePicker.pickFiles(type: FileType.image);
                           if (result != null && result.files.isNotEmpty) {
                             setSheetState(() {
                               newCoverFile = result.files.first;
@@ -138,7 +140,7 @@ class _ProfileView extends StatelessWidget {
                       Center(
                         child: GestureDetector(
                           onTap: () async {
-                            final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                            final result = await FilePicker.pickFiles(type: FileType.image);
                             if (result != null && result.files.isNotEmpty) {
                               setSheetState(() {
                                 newAvatarFile = result.files.first;
@@ -275,6 +277,9 @@ class _ProfileView extends StatelessWidget {
   }
 
   Widget _buildAppBar(BuildContext context, String title) {
+    final currentUserId = context.read<AuthCubit>().state.userId;
+    final isOtherUser = userId != null && userId != currentUserId;
+
     return SliverAppBar(
       backgroundColor: AppColors.surfaceWhite,
       pinned: true,
@@ -287,7 +292,7 @@ class _ProfileView extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-     actions: [
+      actions: [
         IconButton(
           icon: const Icon(Icons.search, color: AppColors.textPrimary),
           onPressed: () {
@@ -295,6 +300,41 @@ class _ProfileView extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
           },
         ),
+        if (isOtherUser)
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+            onSelected: (value) async {
+              if (value == 'block') {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Chặn người dùng'),
+                    content: const Text('Bạn có chắc chắn muốn chặn người này không?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Chặn', style: TextStyle(color: Colors.red))),
+                    ],
+                  ),
+                );
+                if (confirm == true && context.mounted) {
+                  final token = context.read<AuthCubit>().state.token ?? "";
+                  final success = await context.read<ProfileCubit>().blockUser(token: token, userId: userId!);
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã chặn người dùng này')));
+                    Navigator.pop(context); // Quay lại trang trước
+                  } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chặn thất bại')));
+                  }
+                }
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'block',
+                child: Text('Chặn'),
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -342,7 +382,7 @@ class _ProfileView extends StatelessWidget {
                     child: AvatarWidget(
                       imageUrl: user.avatarUrl,
                       radius: 60, // 120x120 as per specs
-                      isOnline: true,
+                      isOnline: user.isOnline,
                     ),
                   ),
                 ),

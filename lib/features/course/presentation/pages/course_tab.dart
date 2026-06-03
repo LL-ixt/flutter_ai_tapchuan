@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/course/presentation/pages/course_request_tab.dart';
+import 'package:flutter_ai_tapchuan/features/course/presentation/pages/search_teacher_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/course_cubit.dart';
-import '../widgets/student_list_tile.dart';
 
 class CourseTab extends StatelessWidget {
   const CourseTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final role = context.watch<AuthCubit>().state.role;
+    final isTeacher = role == 'GV';
+
     return BlocProvider(
       create: (context) => CourseCubit()..loadCourseData(),
       child: DefaultTabController(
@@ -28,14 +32,13 @@ class CourseTab extends StatelessWidget {
                 fontSize: 24,
               ),
             ),
-            bottom: const TabBar(
+            bottom: TabBar(
               labelColor: AppColors.primaryBlue,
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.primaryBlue,
               tabs: [
-                Tab(text: 'Yêu cầu học'),
-                Tab(text: 'Đã đăng ký'),
-                
+                Tab(text: isTeacher ? 'Yêu cầu học' : 'Tìm giáo viên'),
+                const Tab(text: 'Đã đăng ký'),
               ],
             ),
           ),
@@ -48,9 +51,8 @@ class CourseTab extends StatelessWidget {
               } else if (state is CourseLoaded) {
                 return TabBarView(
                   children: [
-                    const CourseRequestTab(),
+                    isTeacher ? const CourseRequestTab() : const SearchTeacherTab(),
                     _buildRegisteredCourses(state.registeredCourses),
-                    
                   ],
                 );
               }

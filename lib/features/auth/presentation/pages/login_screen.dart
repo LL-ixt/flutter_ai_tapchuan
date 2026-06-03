@@ -52,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     message: 'Chào mừng ${state.username} quay trở lại!',
                     isSuccess: true,
                     onConfirm: () {
+                      if (!mounted) return;
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => const MainScreen()),

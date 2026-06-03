@@ -6,6 +6,7 @@ class UserProfileEntity {
   final String bio;
   final String location;
   final String link;
+  final bool isOnline;
 
   UserProfileEntity({
     required this.id,
@@ -15,6 +16,7 @@ class UserProfileEntity {
     required this.bio,
     required this.location,
     required this.link,
+    this.isOnline = false,
   });
 
   UserProfileEntity copyWith({
@@ -25,6 +27,7 @@ class UserProfileEntity {
     String? bio,
     String? location,
     String? link,
+    bool? isOnline,
   }) {
     return UserProfileEntity(
       id: id ?? this.id,
@@ -34,6 +37,7 @@ class UserProfileEntity {
       bio: bio ?? this.bio,
       location: location ?? this.location,
       link: link ?? this.link,
+      isOnline: isOnline ?? this.isOnline,
     );
   }
 }

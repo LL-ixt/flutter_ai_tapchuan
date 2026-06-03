@@ -5,7 +5,7 @@ class SearchInitial extends SearchState {}
 class SearchLoading extends SearchState {}
 
 class SearchLoaded extends SearchState {
-  final List<dynamic> results;
+  final Map<String, dynamic> results;
 
   SearchLoaded(this.results);
 }

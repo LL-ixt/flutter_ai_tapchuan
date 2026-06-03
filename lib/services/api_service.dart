@@ -35,6 +35,22 @@ class ApiService {
     }
   }
 
+  static String _formatTimestamp(String timestamp) {
+    try {
+      DateTime date;
+      if (timestamp.contains('T') || timestamp.contains('-')) {
+        date = DateTime.parse(timestamp).toLocal();
+      } else {
+        double timestampDouble = double.parse(timestamp);
+        date = DateTime.fromMillisecondsSinceEpoch((timestampDouble * 1000).toInt());
+      }
+      String pad(int n) => n.toString().padLeft(2, '0');
+      return '${pad(date.day)}/${pad(date.month)}/${date.year} ${pad(date.hour)}:${pad(date.minute)}';
+    } catch (e) {
+      return timestamp; // Trả về nguyên gốc nếu lỗi
+    }
+  }
+
   static MediaType _getMediaType(String filename) {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.png')) return MediaType('image', 'png');
@@ -731,7 +747,13 @@ class ApiService {
       print("=== API Get Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetPostResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is Map) {
+          if (jsonResponse['data']['created'] != null) {
+            jsonResponse['data']['created'] = _formatTimestamp(jsonResponse['data']['created'].toString());
+          }
+        }
+        return GetPostResponse.fromJson(jsonResponse);
       } else {
         return GetPostResponse(
           code: '1001',
@@ -791,7 +813,7 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
 
       print("status code editPost: ${response.statusCode}");
-      print("=== API Edit Post Response: ${response.body}");
+      // print("=== API Edit Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
         return EditPostResponse.fromJson(jsonDecode(response.body));
@@ -870,7 +892,23 @@ class ApiService {
       print("=== API Get Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetCommentResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        var rawData = jsonResponse['data'];
+        List? list;
+        if (rawData is List) {
+          list = rawData;
+        } else if (rawData is Map && rawData['data'] is List) {
+          list = rawData['data'];
+        }
+        
+        if (list != null) {
+          for (var comment in list) {
+            if (comment is Map && comment['created'] != null) {
+              comment['created'] = _formatTimestamp(comment['created'].toString());
+            }
+          }
+        }
+        return GetCommentResponse.fromJson(jsonResponse);
       } else {
         return GetCommentResponse(
           code: '1001',
@@ -889,10 +927,18 @@ class ApiService {
     try {
       final response = await http.post(url, body: request.toJson());
       print("status code getListPosts: ${response.statusCode}");
-      print("=== API Get List Posts Response: ${response.body}");
+      //print("=== API Get List Posts Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return GetListPostsResponse.fromJson(jsonDecode(response.body));
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is Map && jsonResponse['data']['posts'] is List) {
+          for (var post in jsonResponse['data']['posts']) {
+            if (post is Map && post['created'] != null) {
+              post['created'] = _formatTimestamp(post['created'].toString());
+            }
+          }
+        }
+        return GetListPostsResponse.fromJson(jsonResponse);
       } else {
         return GetListPostsResponse(
           code: '1001',
@@ -1201,6 +1247,96 @@ class ApiService {
     String notificationId,
   ) {
     return setReadNotification(token, notificationId);
+  }
+
+  // =========================================================
+  // PHẦN CỦA KHÓA HỌC: 3 API (Requested Enrollment, Approve, Request Course)
+  // =========================================================
+
+  // 1. API: LẤY DANH SÁCH YÊU CẦU NHẬP HỌC (get_requested_enrollment)
+  static Future<Map<String, dynamic>> getRequestedEnrollment(
+    String token,
+    int index,
+    int count, {
+    String userId = "",
+  }) async {
+    final url = Uri.parse('$baseUrl/get_requested_enrollment');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'index': index.toString(),
+          'count': count.toString(),
+          'user_id': userId,
+        },
+      );
+      print("status code getRequestedEnrollment: ${response.statusCode}");
+      print("=== API Get Requested Enrollment Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  // 2. API: CHẤP THUẬN/TỪ CHỐI NHẬP HỌC (set_approve_enrollment)
+  static Future<Map<String, dynamic>> setApproveEnrollment(
+    String token,
+    String userId,
+    String isAccept, // '0' = reject, '1' = accept
+  ) async {
+    final url = Uri.parse('$baseUrl/set_approve_enrollment');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'user_id': userId,
+          'is_accept': isAccept,
+        },
+      );
+      print("status code setApproveEnrollment: ${response.statusCode}");
+      print("=== API Set Approve Enrollment Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
+  // 3. API: YÊU CẦU THAM GIA KHÓA HỌC (set_request_course)
+  static Future<Map<String, dynamic>> setRequestCourse(
+    String token,
+    String courseId,
+    String userId,
+  ) async {
+    final url = Uri.parse('$baseUrl/set_request_course');
+    try {
+      final response = await http.post(
+        url,
+        body: {
+          'token': token,
+          'course_id': courseId,
+          'user_id': userId,
+        },
+      );
+      print("status code setRequestCourse: ${response.statusCode}");
+      print("=== API Set Request Course Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
   }
 
   static Future<Map<String, dynamic>> checkNewVersion({
