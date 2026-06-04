@@ -162,8 +162,6 @@ class _HomeView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(Icons.photo_library, color: Colors.green),
                 ],
               ),
             ),

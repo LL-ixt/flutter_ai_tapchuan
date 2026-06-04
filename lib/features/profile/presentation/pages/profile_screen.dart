@@ -439,36 +439,6 @@ class _ProfileView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        user.role == 'GV' ? Icons.school : Icons.person_outline,
-                        color: user.role == 'GV' ? AppColors.primaryBlue : Colors.orange,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: (user.role == 'GV' ? AppColors.primaryBlue : Colors.orange).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: (user.role == 'GV' ? AppColors.primaryBlue : Colors.orange).withValues(alpha: 0.3),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          user.role == 'GV' ? 'Giảng viên' : 'Học viên',
-                          style: TextStyle(
-                            color: user.role == 'GV' ? AppColors.primaryBlue : Colors.orange,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   // Edit Profile Button
                   if (!isOtherUser)
