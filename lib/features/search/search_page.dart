@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/features/search/presentation/bloc/search_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/search/presentation/bloc/search_state.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import '../../core/widgets/post_card.dart';
 
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
@@ -193,7 +194,7 @@ class _SearchPageViewState extends State<_SearchPageView> {
     );
   }
 
-  // GIAO DIỆN 2: MÀN HÌNH KẾT QUẢ (BÀI VIẾT TỪ API)
+  // GIAO DIỆN 2: MÀN HÌNH KẾT QUẢ TÌM KIẾM
   Widget _buildSearchResults() {
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
@@ -202,9 +203,11 @@ class _SearchPageViewState extends State<_SearchPageView> {
             child: CircularProgressIndicator(),
           );
         } else if (state is SearchLoaded) {
-          final results = (state.results['posts'] as List<dynamic>?) ?? [];
+          final data = state.results;
+          final users = (data['users'] as List<dynamic>?) ?? [];
+          final posts = (data['posts'] as List<dynamic>?) ?? [];
 
-          if (results.isEmpty) {
+          if (users.isEmpty && posts.isEmpty) {
             return Center(
               child: Text(
                 'Không tìm thấy kết quả cho "$_searchQuery"',
@@ -213,63 +216,31 @@ class _SearchPageViewState extends State<_SearchPageView> {
             );
           }
 
-          return ListView.builder(
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              final post = results[index] as Map<String, dynamic>;
-              final author = post['author'] ?? {};
-              
-              return Card(
-                elevation: 0,
-                margin: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          return DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                const TabBar(
+                  labelColor: Colors.blue,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.blue,
+                  tabs: [
+                    Tab(text: "Tất cả"),
+                    Tab(text: "Người dùng"),
+                    Tab(text: "Bài viết"),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.grey[300],
-                            backgroundImage: author['avatar'] != null
-                                ? NetworkImage(author['avatar'] as String)
-                                : null,
-                            child: author['avatar'] == null
-                                ? const Icon(Icons.person, color: Colors.white)
-                                : null,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  author['username'] ?? 'Unknown',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  post['created_at'] ?? '',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        post['described'] ?? '',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Builder(builder: (ctx) => _buildAllTab(ctx, users, posts)),
+                      _buildUsersTab(users),
+                      _buildPostsTab(posts),
                     ],
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           );
         } else if (state is SearchError) {
           return Center(
@@ -281,6 +252,110 @@ class _SearchPageViewState extends State<_SearchPageView> {
         }
 
         return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildAllTab(BuildContext context, List<dynamic> users, List<dynamic> posts) {
+    return CustomScrollView(
+      slivers: [
+        if (users.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Người dùng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  TextButton(
+                    onPressed: () {
+                      DefaultTabController.of(context).animateTo(1);
+                    },
+                    child: const Text('Xem tất cả'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final user = users[index] as Map<String, dynamic>;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(user['avatar'] ?? "https://i.pravatar.cc/150"),
+                  ),
+                  title: Text(user['username'] ?? 'Không tên', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(user['role'] == 'GV' ? 'Giáo viên' : 'Học viên'),
+                  onTap: () {
+                    // Navigate to user profile if needed
+                  },
+                );
+              },
+              childCount: users.length > 3 ? 3 : users.length,
+            ),
+          ),
+          const SliverToBoxAdapter(child: Divider(thickness: 8, color: Color(0xFFE5E6EB))),
+        ],
+        if (posts.isNotEmpty) ...[
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Text('Bài viết', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final post = posts[index] as Map<String, dynamic>;
+                return PostCard(
+                  postData: post,
+                  isLiked: post['is_felt'] == '1' || post['is_felt'] == 1,
+                  onLikeToggle: () {},
+                );
+              },
+              childCount: posts.length,
+            ),
+          ),
+        ]
+      ],
+    );
+  }
+
+  Widget _buildUsersTab(List<dynamic> users) {
+    if (users.isEmpty) return const Center(child: Text("Không có người dùng nào."));
+    return ListView.builder(
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        final user = users[index] as Map<String, dynamic>;
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(user['avatar'] ?? "https://i.pravatar.cc/150"),
+          ),
+          title: Text(user['username'] ?? 'Không tên', style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(user['role'] == 'GV' ? 'Giáo viên' : 'Học viên'),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostsTab(List<dynamic> posts) {
+    if (posts.isEmpty) return const Center(child: Text("Không có bài viết nào."));
+    // Sử dụng ListView.builder để tạo List scrollable và render tăng dần giúp tối ưu thời gian load
+    return ListView.builder(
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        final post = posts[index] as Map<String, dynamic>;
+        return Column(
+          children: [
+            PostCard(
+              postData: post,
+              isLiked: post['is_felt'] == '1' || post['is_felt'] == 1,
+              onLikeToggle: () {},
+            ),
+            const Divider(thickness: 8, color: Color(0xFFE5E6EB)), // Facebook style divider
+          ],
+        );
       },
     );
   }

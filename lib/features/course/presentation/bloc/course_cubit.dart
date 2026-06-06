@@ -52,12 +52,13 @@ class CourseCubit extends Cubit<CourseState> {
       );
 
       if (response['code'] == '1000') {
-        final List<dynamic> data = response['data'] ?? [];
+        final Map<String, dynamic> dataMap = response['data'] is Map ? response['data'] : {};
+        final List<dynamic> data = dataMap['courses'] ?? [];
         final List<CourseEntity> newCourses = data.map((json) => CourseEntity(
           id: json['id']?.toString() ?? '',
-          title: json['title'] ?? 'Khoá học không tên',
-          coverUrl: json['coverUrl'] ?? json['avatar'] ?? '',
-          instructor: json['instructorName'] ?? 'Không rõ',
+          title: json['name'] ?? json['title'] ?? 'Khoá học không tên',
+          coverUrl: json['avatar'] ?? json['coverUrl'] ?? '',
+          instructor: json['instructorName'] ?? 'Giáo viên',
           progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,
         )).toList();
 
@@ -94,12 +95,13 @@ class CourseCubit extends Cubit<CourseState> {
         );
 
         if (response['code'] == '1000') {
-          final List<dynamic> data = response['data'] ?? [];
+          final Map<String, dynamic> dataMap = response['data'] is Map ? response['data'] : {};
+          final List<dynamic> data = dataMap['courses'] ?? [];
           final List<CourseEntity> newCourses = data.map((json) => CourseEntity(
             id: json['id']?.toString() ?? '',
-            title: json['title'] ?? 'Khoá học không tên',
-            coverUrl: json['coverUrl'] ?? json['avatar'] ?? '',
-            instructor: json['instructorName'] ?? 'Không rõ',
+            title: json['name'] ?? json['title'] ?? 'Khoá học không tên',
+            coverUrl: json['avatar'] ?? json['coverUrl'] ?? '',
+            instructor: json['instructorName'] ?? 'Giáo viên',
             progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,
           )).toList();
 

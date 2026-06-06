@@ -111,6 +111,18 @@ class ProfileCubit extends Cubit<ProfileState> {
     return false;
   }
 
+  Future<bool> requestCourse({required String token, required String courseId, required String userId}) async {
+    try {
+      final result = await ApiService.setRequestCourse(token, courseId, userId);
+      if (result['code'] == '1000' || result['code'] == '200') {
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
+
   void toggleLikePost(String postId) {
     if (state is ProfileLoaded) {
       final currentState = state as ProfileLoaded;

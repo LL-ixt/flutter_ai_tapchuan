@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/course/presentation/pages/course_request_tab.dart';
-import 'package:flutter_ai_tapchuan/features/course/presentation/pages/search_teacher_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -85,7 +84,9 @@ class _CourseTabState extends State<CourseTab> {
               } else if (state is CourseLoaded) {
                 return TabBarView(
                   children: [
-                    isTeacher ? const CourseRequestTab() : const SearchTeacherTab(),
+                    isTeacher 
+                        ? const CourseRequestTab() 
+                        : const Center(child: Text('Chức năng đang phát triển', style: TextStyle(fontSize: 16))),
                     isTeacher 
                         ? const Center(child: Text('Giáo viên không có khoá học đã đăng ký.'))
                         : _buildRegisteredCourses(state),

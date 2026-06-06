@@ -8,7 +8,9 @@ import '../../../../core/constants/color_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../../../core/widgets/post_card.dart';
 import '../../../../core/widgets/input_box.dart';
+import '../../../../core/utils/dialog_utils.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../chat/presentation/pages/chat_room_screen.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_cubit.dart';
 
@@ -419,28 +421,26 @@ class _ProfileView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Details (Location, Link)
+                  // Details (Location, Link) removed
+
+                  // Role Indicator
                   Row(
                     children: [
-                      const Icon(Icons.home, color: AppColors.textSecondary, size: 20),
-                      const SizedBox(width: 8),
-                      Text('Sống tại ', style: const TextStyle(color: AppColors.textSecondary, fontSize: 15)),
-                      Text(user.location, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.link, color: AppColors.textSecondary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        user.link,
-                        style: const TextStyle(color: AppColors.primaryBlue, fontSize: 15, fontWeight: FontWeight.w500),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (user.role == 'GV' || user.role == '2') ? AppColors.primaryBlue : Colors.green,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          (user.role == 'GV' || user.role == '2') ? 'Giáo viên' : 'Học viên',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Edit Profile Button
+                  // Edit Profile Button or Send Registration Request Button
                   if (!isOtherUser)
                     SizedBox(
                       width: double.infinity,
@@ -463,6 +463,118 @@ class _ProfileView extends StatelessWidget {
                           ),
                         ),
                       ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        if ((user.role != 'GV' || user.role != '2') && 
+                            (context.read<AuthCubit>().state.role == 'HS' || context.read<AuthCubit>().state.role != '1')) ...[
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                 final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Gửi đăng ký'),
+                                      content: const Text('Bạn muốn gửi yêu cầu đăng ký học đến giáo viên này?'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx, true), 
+                                          child: const Text('Gửi', style: TextStyle(color: AppColors.primaryBlue))
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true && context.mounted) {
+                                     final token = context.read<AuthCubit>().state.token ?? "";
+                                     final myUserId = context.read<AuthCubit>().state.userId ?? "";
+                                     final success = await context.read<ProfileCubit>().requestCourse(
+                                       token: token,
+                                       courseId: user.id,
+                                       userId: myUserId,
+                                     );
+                                     if (success && context.mounted) {
+                                       DialogUtils.showNotificationDialog(
+                                         context: context,
+                                         title: 'Thành công',
+                                         message: 'Đã gửi yêu cầu thành công!',
+                                         isSuccess: true,
+                                       );
+                                     } else if (context.mounted) {
+                                       DialogUtils.showNotificationDialog(
+                                         context: context,
+                                         title: 'Thất bại',
+                                         message: 'Có thể là một trong các nguyên nhân sau:\nBạn đã gửi yêu cầu đăng ký rồi\nNgười dùng này chưa xác thực\nLỗi hệ thống mà chúng tôi đang khắc phục',
+                                         isSuccess: false,
+                                       );
+                                     }
+                                  }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryBlue,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text(
+                                'Gửi đăng ký',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              final authState = context.read<AuthCubit>().state;
+                              final partnerInfo = {
+                                'id': user.id,
+                                'username': user.name,
+                                'avatar': user.avatarUrl,
+                              };
+                              final myInfo = {
+                                'id': authState.userId,
+                                'username': authState.username,
+                                'avatar': authState.avatar,
+                              };
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatRoomDetailScreen(
+                                    partnerInfo: partnerInfo,
+                                    token: authState.token ?? "",
+                                    myInfo: myInfo,
+                                  ),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.grey),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: const Text(
+                              'Nhắn tin',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   const SizedBox(height: 16),
                 ],
