@@ -20,6 +20,23 @@ class _VerifyScreenState extends State<VerifyScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   bool _isLoading = false;
+  String _verifyCode = "...";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVerifyCode();
+  }
+
+  Future<void> _fetchVerifyCode() async {
+    final result = await ApiService.getVerifyCode(widget.phoneNumber);
+    if (!mounted) return;
+    if (result['code'] == '1000' && result['data'] != null) {
+      setState(() {
+        _verifyCode = (result['data']['verifyCode'] ?? result['data']['verify_code'] ?? result['data']['codeVerify'] ?? result['data']['code'] ?? "...").toString();
+      });
+    }
+  }
 
   void _handleVerify() async {
     if (_formKey.currentState!.validate()) {
@@ -90,9 +107,9 @@ class _VerifyScreenState extends State<VerifyScreen> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 8), //CHO MÃ LẤY ĐƯỢC TỪ API get_verify_code vào text bên dưới.
                 Text(
-                  "Mã xác thực đã được gửi đến số điện thoại ${widget.phoneNumber}. Vui lòng nhập mã để kích hoạt tài khoản.",
+                  "Mã xác thực đã được gửi đến số điện thoại ${widget.phoneNumber}. Vui lòng nhập mã ${_verifyCode} để kích hoạt tài khoản.",
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.grey,
@@ -110,7 +127,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
                     letterSpacing: 4
                   ),
                   decoration: InputDecoration(
-                    hintText: "7VJ212",
+                    hintText: "",
                     hintStyle: const TextStyle(color: Colors.grey, fontSize: 18, letterSpacing: 0),
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                     border: OutlineInputBorder(

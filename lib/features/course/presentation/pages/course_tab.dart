@@ -6,16 +6,50 @@ import '../../../../core/constants/color_constants.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../bloc/course_cubit.dart';
 
-class CourseTab extends StatelessWidget {
+class CourseTab extends StatefulWidget {
   const CourseTab({super.key});
+
+  @override
+  State<CourseTab> createState() => _CourseTabState();
+}
+
+class _CourseTabState extends State<CourseTab> {
+  final ScrollController _scrollController = ScrollController();
+  late CourseCubit _courseCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _courseCubit = CourseCubit();
+    _scrollController.addListener(_onScroll);
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthCubit>().state;
+      _courseCubit.initData(authState.role, authState.token, authState.userId);
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _courseCubit.loadMoreCourses();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _courseCubit.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final role = context.watch<AuthCubit>().state.role;
     final isTeacher = role == 'GV';
 
-    return BlocProvider(
-      create: (context) => CourseCubit()..loadCourseData(),
+    return BlocProvider.value(
+      value: _courseCubit,
       child: DefaultTabController(
         length: 2,
         child: Scaffold(
@@ -44,7 +78,7 @@ class CourseTab extends StatelessWidget {
           ),
           body: BlocBuilder<CourseCubit, CourseState>(
             builder: (context, state) {
-              if (state is CourseLoading) {
+              if (state is CourseLoading || state is CourseInitial) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is CourseError) {
                 return Center(child: Text(state.message));
@@ -52,7 +86,9 @@ class CourseTab extends StatelessWidget {
                 return TabBarView(
                   children: [
                     isTeacher ? const CourseRequestTab() : const SearchTeacherTab(),
-                    _buildRegisteredCourses(state.registeredCourses),
+                    isTeacher 
+                        ? const Center(child: Text('Giáo viên không có khoá học đã đăng ký.'))
+                        : _buildRegisteredCourses(state),
                   ],
                 );
               }
@@ -64,15 +100,24 @@ class CourseTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRegisteredCourses(List courses) {
+  Widget _buildRegisteredCourses(CourseLoaded state) {
+    final courses = state.registeredCourses;
     if (courses.isEmpty) {
       return const Center(child: Text('Bạn chưa đăng ký khóa học nào.'));
     }
     
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(12),
-      itemCount: courses.length,
+      itemCount: courses.length + (state.isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= courses.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final course = courses[index];
         return Card(
           elevation: 1,
@@ -137,3 +182,4 @@ class CourseTab extends StatelessWidget {
     );
   }
 }
+

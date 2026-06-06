@@ -198,6 +198,28 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getVerifyCode(String phone) async {
+    final url = Uri.parse('$baseUrl/get_verify_code');
+    try {
+      final response = await http.post(
+        url,
+        body: {'phonenumber': phone},
+      );
+      print("status code getVerifyCode: ${response.statusCode}");
+      print("=== API Get Verify Code Response: ${response.body}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
+      }
+    } catch (e) {
+      return {'code': '9999', 'message': 'Exception error: $e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> checkVerifyCode(
     String phone,
     String code,
@@ -517,7 +539,7 @@ class ApiService {
         },
       );
       print("status code getListCourses: ${response.statusCode}");
-      print("=== API Get List Courses Response: ${response.body}");
+      print("=== API Get List Courses Of Student Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
