@@ -65,6 +65,9 @@ class ProfileCubit extends Cubit<ProfileState> {
           link: 'github.com/profile',
           role: fetchedRole,
           isOnline: data['online'] == '1',
+          isRelated: data['isRelated']?.toString() ?? '0',
+          listing: data['listing']?.toString() ?? '0',
+          followed: data['followed']?.toString() ?? '0',
         );
 
         // Lấy danh sách bài viết
