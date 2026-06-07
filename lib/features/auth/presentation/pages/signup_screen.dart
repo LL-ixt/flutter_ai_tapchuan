@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/pages/verify_screen.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
-//import '../../../../core/utils/validators.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/input_box.dart';
 import '../../../../core/widgets/submit_button.dart';
 import '../../../../services/api_service.dart';
@@ -114,24 +114,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   hintText: "Nhập số điện thoại (10 số)",
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Vui lòng nhập số điện thoại';
-                    }
-                    return null;
-                  },
+                  validator: AppValidators.validatePhone,
                 ),
                 InputBox(
                   label: "Mật khẩu mới",
                   hintText: "Mật khẩu (6-10 ký tự)",
                   controller: _passwordController,
                   obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidators.validatePassword(value, _phoneController.text),
                 ),
                 Text(
                   "Bạn là:",

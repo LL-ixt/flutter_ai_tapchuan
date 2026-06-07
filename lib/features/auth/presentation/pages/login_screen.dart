@@ -7,7 +7,7 @@ import 'package:flutter_ai_tapchuan/features/main/presentation/pages/main_screen
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/constants/text_style_constants.dart';
 import '../../../../core/utils/dialog_utils.dart';
-//import '../core/utils/validators.dart';
+import '../../../../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -101,12 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Vui lòng nhập số điện thoại';
-                          }
-                          return null;
-                        },
+                        validator: AppValidators.validatePhone,
                       ),
                       const SizedBox(height: 16),
 
@@ -131,12 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Vui lòng nhập mật khẩu';
-                          }
-                          return null;
-                        },
+                        validator: (value) => AppValidators.validatePassword(value, _phoneController.text),
                       ),
                       const SizedBox(height: 24),
 
