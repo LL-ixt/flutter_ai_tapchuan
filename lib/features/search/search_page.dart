@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/features/search/presentation/bloc/search_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/search/presentation/bloc/search_state.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/profile/presentation/pages/profile_screen.dart';
 import '../../core/widgets/post_card.dart';
 
 class SearchPage extends StatelessWidget {
@@ -12,9 +13,7 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => SearchCubit()
-        ..getSavedSearches(
-          token: context.read<AuthCubit>().state.token ?? '',
-        ),
+        ..getSavedSearches(token: context.read<AuthCubit>().state.token ?? ''),
       child: const _SearchPageView(),
     );
   }
@@ -84,7 +83,9 @@ class _SearchPageViewState extends State<_SearchPageView> {
           ),
         ),
       ),
-      body: _searchQuery.isEmpty ? _buildRecentSearches() : _buildSearchResults(),
+      body: _searchQuery.isEmpty
+          ? _buildRecentSearches()
+          : _buildSearchResults(),
     );
   }
 
@@ -99,12 +100,10 @@ class _SearchPageViewState extends State<_SearchPageView> {
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
         if (state is SavedSearchLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         } else if (state is SavedSearchLoaded) {
           final searches = state.searches;
-          
+
           if (searches.isEmpty) {
             return Center(
               child: Padding(
@@ -127,15 +126,26 @@ class _SearchPageViewState extends State<_SearchPageView> {
                     children: [
                       const Text(
                         'Tìm kiếm gần đây',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
                           // Xóa tất cả tìm kiếm
-                          final authToken = context.read<AuthCubit>().state.token;
-                          context.read<SearchCubit>().deleteAllSearches(token: authToken?? '');
+                          final authToken = context
+                              .read<AuthCubit>()
+                              .state
+                              .token;
+                          context.read<SearchCubit>().deleteAllSearches(
+                            token: authToken ?? '',
+                          );
                         },
-                        child: const Text('XÓA TẤT CẢ', style: TextStyle(color: Colors.blue)),
+                        child: const Text(
+                          'XÓA TẤT CẢ',
+                          style: TextStyle(color: Colors.blue),
+                        ),
                       ),
                     ],
                   ),
@@ -150,10 +160,15 @@ class _SearchPageViewState extends State<_SearchPageView> {
                       leading: const Icon(Icons.search, color: Colors.grey),
                       title: Text(search['keyword'] ?? ''),
                       trailing: IconButton(
-                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        icon: const Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
                         onPressed: () {
                           // Xóa 1 mục tìm kiếm
-                          final authToken = context.read<AuthCubit>().state.token ?? '';
+                          final authToken =
+                              context.read<AuthCubit>().state.token ?? '';
                           context.read<SearchCubit>().deleteSearch(
                             token: authToken,
                             searchId: search['search_id'] ?? '',
@@ -167,9 +182,10 @@ class _SearchPageViewState extends State<_SearchPageView> {
                         });
                         // Thực hiện tìm kiếm
                         final authToken = context.read<AuthCubit>().state.token;
-                        final userId = context.read<AuthCubit>().state.userId ?? '';
+                        final userId =
+                            context.read<AuthCubit>().state.userId ?? '';
                         context.read<SearchCubit>().search(
-                          token: authToken??'',
+                          token: authToken ?? '',
                           keyword: search['keyword'] ?? '',
                           userId: userId,
                         );
@@ -199,13 +215,27 @@ class _SearchPageViewState extends State<_SearchPageView> {
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
         if (state is SearchLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         } else if (state is SearchLoaded) {
           final data = state.results;
-          final users = (data['users'] as List<dynamic>?) ?? [];
-          final posts = (data['posts'] as List<dynamic>?) ?? [];
+          final rawUsers = (data['users'] as List<dynamic>?) ?? [];
+          final rawPosts = (data['posts'] as List<dynamic>?) ?? [];
+
+          final users = rawUsers.where((u) {
+            if (u is! Map<String, dynamic>) return false;
+            final username = u['username']?.toString() ?? '';
+            final name = u['name']?.toString() ?? '';
+            return _matchesSearch(username, _searchQuery) ||
+                _matchesSearch(name, _searchQuery);
+          }).toList();
+
+          final posts = rawPosts.where((p) {
+            if (p is! Map<String, dynamic>) return false;
+            final described = p['described']?.toString() ?? '';
+            final title = p['title']?.toString() ?? '';
+            return _matchesSearch(described, _searchQuery) ||
+                _matchesSearch(title, _searchQuery);
+          }).toList();
 
           if (users.isEmpty && posts.isEmpty) {
             return Center(
@@ -233,7 +263,9 @@ class _SearchPageViewState extends State<_SearchPageView> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      Builder(builder: (ctx) => _buildAllTab(ctx, users, posts)),
+                      Builder(
+                        builder: (ctx) => _buildAllTab(ctx, users, posts),
+                      ),
                       _buildUsersTab(users),
                       _buildPostsTab(posts),
                     ],
@@ -256,17 +288,27 @@ class _SearchPageViewState extends State<_SearchPageView> {
     );
   }
 
-  Widget _buildAllTab(BuildContext context, List<dynamic> users, List<dynamic> posts) {
+  Widget _buildAllTab(
+    BuildContext context,
+    List<dynamic> users,
+    List<dynamic> posts,
+  ) {
     return CustomScrollView(
       slivers: [
         if (users.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Người dùng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Người dùng',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   TextButton(
                     onPressed: () {
                       DefaultTabController.of(context).animateTo(1);
@@ -278,69 +320,103 @@ class _SearchPageViewState extends State<_SearchPageView> {
             ),
           ),
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final user = users[index] as Map<String, dynamic>;
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(user['avatar'] ?? "https://i.pravatar.cc/150"),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final user = users[index] as Map<String, dynamic>;
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(
+                    user['avatar'] ?? "https://i.pravatar.cc/150",
                   ),
-                  title: Text(user['username'] ?? 'Không tên', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(user['role'] == 'GV' ? 'Giáo viên' : 'Học viên'),
-                  onTap: () {
-                    // Navigate to user profile if needed
-                  },
-                );
-              },
-              childCount: users.length > 3 ? 3 : users.length,
-            ),
+                ),
+                title: Text(
+                  user['username'] ?? 'Không tên',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(user['role'] == 'GV' ? 'Giáo viên' : 'Học viên'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(
+                        userId:
+                            user['id']?.toString() ??
+                            user['user_id']?.toString() ??
+                            '',
+                      ),
+                    ),
+                  );
+                },
+              );
+            }, childCount: users.length > 3 ? 3 : users.length),
           ),
-          const SliverToBoxAdapter(child: Divider(thickness: 8, color: Color(0xFFE5E6EB))),
+          const SliverToBoxAdapter(
+            child: Divider(thickness: 8, color: Color(0xFFE5E6EB)),
+          ),
         ],
         if (posts.isNotEmpty) ...[
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Text('Bài viết', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Bài viết',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final post = posts[index] as Map<String, dynamic>;
-                return PostCard(
-                  postData: post,
-                  isLiked: post['is_felt'] == '1' || post['is_felt'] == 1,
-                  onLikeToggle: () {},
-                );
-              },
-              childCount: posts.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final post = posts[index] as Map<String, dynamic>;
+              return PostCard(
+                postData: post,
+                isLiked: post['is_felt'] == '1' || post['is_felt'] == 1,
+                onLikeToggle: () {},
+              );
+            }, childCount: posts.length),
           ),
-        ]
+        ],
       ],
     );
   }
 
   Widget _buildUsersTab(List<dynamic> users) {
-    if (users.isEmpty) return const Center(child: Text("Không có người dùng nào."));
+    if (users.isEmpty)
+      return const Center(child: Text("Không có người dùng nào."));
     return ListView.builder(
       itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index] as Map<String, dynamic>;
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(user['avatar'] ?? "https://i.pravatar.cc/150"),
+            backgroundImage: NetworkImage(
+              user['avatar'] ?? "https://i.pravatar.cc/150",
+            ),
           ),
-          title: Text(user['username'] ?? 'Không tên', style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            user['username'] ?? 'Không tên',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           subtitle: Text(user['role'] == 'GV' ? 'Giáo viên' : 'Học viên'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProfileScreen(
+                  userId:
+                      user['id']?.toString() ??
+                      user['user_id']?.toString() ??
+                      '',
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildPostsTab(List<dynamic> posts) {
-    if (posts.isEmpty) return const Center(child: Text("Không có bài viết nào."));
+    if (posts.isEmpty)
+      return const Center(child: Text("Không có bài viết nào."));
     // Sử dụng ListView.builder để tạo List scrollable và render tăng dần giúp tối ưu thời gian load
     return ListView.builder(
       itemCount: posts.length,
@@ -353,10 +429,32 @@ class _SearchPageViewState extends State<_SearchPageView> {
               isLiked: post['is_felt'] == '1' || post['is_felt'] == 1,
               onLikeToggle: () {},
             ),
-            const Divider(thickness: 8, color: Color(0xFFE5E6EB)), // Facebook style divider
+            const Divider(
+              thickness: 8,
+              color: Color(0xFFE5E6EB),
+            ), // Facebook style divider
           ],
         );
       },
     );
+  }
+
+  bool _matchesSearch(String target, String keyword) {
+    final normalizedTarget = target.toLowerCase();
+    final normalizedKeyword = keyword.toLowerCase().trim();
+    if (normalizedKeyword.isEmpty) return false;
+
+    // Exact match
+    if (normalizedTarget.contains(normalizedKeyword)) return true;
+
+    // Split into individual words
+    final words = normalizedKeyword
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return false;
+
+    // Check if target contains all words (regardless of order)
+    return words.every((word) => normalizedTarget.contains(word));
   }
 }

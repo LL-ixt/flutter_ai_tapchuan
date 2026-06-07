@@ -1132,6 +1132,22 @@ class ApiService {
     });
   }
 
+  static Future<Map<String, dynamic>> setSendMessage(
+    String token,
+    String message, {
+    String? partnerId,
+    String? conversationId,
+    String? partner_id,
+    String? conversation_id,
+  }) {
+    return _postForm('set_send_message', {
+      'token': token,
+      'message': message,
+      'partnerId': partnerId ?? partner_id,
+      'conversationId': conversationId ?? conversation_id,
+    });
+  }
+
   static Future<Map<String, dynamic>> setReadNotification(
     String token,
     String notificationId,
@@ -1257,6 +1273,24 @@ class ApiService {
   }) {
     return setReadMessage(
       token,
+      partnerId: partnerId,
+      conversationId: conversationId,
+      partner_id: partner_id,
+      conversation_id: conversation_id,
+    );
+  }
+
+  static Future<Map<String, dynamic>> set_send_message(
+    String token,
+    String message, {
+    String? partnerId,
+    String? conversationId,
+    String? partner_id,
+    String? conversation_id,
+  }) {
+    return setSendMessage(
+      token,
+      message,
       partnerId: partnerId,
       conversationId: conversationId,
       partner_id: partner_id,

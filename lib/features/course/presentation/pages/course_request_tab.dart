@@ -68,19 +68,20 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
   void _showConfirmDialog(String title, String content, VoidCallback onConfirm) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           content: Text(content, style: const TextStyle(fontSize: 15)),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Nút Hủy đóng popup
+              onPressed: () => Navigator.pop(dialogContext), // Nút Hủy đóng popup
               child: const Text('Hủy', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Đóng popup trước
+                print("=== Confirm Dialog 'Đồng ý' button clicked ===");
+                Navigator.pop(dialogContext); // Đóng popup trước
                 onConfirm(); 
               },
               child: const Text('Đồng ý', style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold)),
@@ -135,24 +136,32 @@ class _CourseRequestTabState extends State<CourseRequestTab> {
   }
 
   Future<void> _handleApprove(String userId, String isAccept, int index) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final token = context.read<AuthCubit>().state.token ?? "";
-    
-    final result = await ApiService.setApproveEnrollment(token, userId, isAccept);
+    print("=== _handleApprove started: userId=$userId, isAccept=$isAccept, index=$index ===");
+    try {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final token = context.read<AuthCubit>().state.token ?? "";
+      print("=== _handleApprove token fetched: $token ===");
+      
+      final result = await ApiService.setApproveEnrollment(token, userId, isAccept);
+      print("=== ApiService.setApproveEnrollment result: $result ===");
 
-    if (result['code'] == '1000' || result['code'] == '200') {
-      scaffoldMessenger.showSnackBar(SnackBar(content: Text(isAccept == '1' ? 'Đã chấp nhận yêu cầu' : 'Đã từ chối yêu cầu')));
-      if (mounted) {
-        setState(() {
-          if (isAccept == '1') {
-            requests.removeAt(index);
-          } else {
-            requests[index]['status'] = 'removed';
-          }
-        });
+      if (result['code'] == '1000' || result['code'] == '200') {
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text(isAccept == '1' ? 'Đã chấp nhận yêu cầu' : 'Đã từ chối yêu cầu')));
+        if (mounted) {
+          setState(() {
+            if (isAccept == '1') {
+              requests.removeAt(index);
+            } else {
+              requests[index]['status'] = 'removed';
+            }
+          });
+        }
+      } else {
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text('Lỗi: ${result['message']}')));
       }
-    } else {
-      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Lỗi: ${result['message']}')));
+    } catch (e, stackTrace) {
+      print("=== Error in _handleApprove: $e ===");
+      print(stackTrace);
     }
   }
 

@@ -10,42 +10,88 @@ part 'profile_state.dart';
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(ProfileInitial());
 
-  void loadProfileData({required String token, String? userId}) async {
+  void loadProfileData({
+    required String token,
+    String? userId,
+    String? currentUserId,
+    String? currentRole,
+  }) async {
     emit(ProfileLoading());
     try {
       final result = await ApiService.getUserInfo(token: token, userId: userId);
-      
+
       if (result['code'] == '1000' || result['code'] == '200') {
         final data = result['data'];
+        final targetUserId = userId ?? data['id']?.toString() ?? '';
+        final username = data['username']?.toString() ?? '';
+
+        String fetchedRole = data['role']?.toString() ?? '';
+
+        // Workaround: getUserInfo doesn't return role for the viewed user
+        if (fetchedRole.isEmpty) {
+          if (currentUserId != null && targetUserId == currentUserId) {
+            fetchedRole = currentRole ?? '';
+          } else if (username.isNotEmpty && currentUserId != null) {
+            // Fetch correct role by querying the search API
+            final searchRes = await ApiService.search(
+              token,
+              username,
+              currentUserId,
+              0,
+              30,
+            );
+            if (searchRes['code'] == '1000' && searchRes['data'] != null) {
+              final List users = searchRes['data']['users'] ?? [];
+              for (var u in users) {
+                if (u['id']?.toString() == targetUserId) {
+                  fetchedRole = u['role']?.toString() ?? '';
+                  break;
+                }
+              }
+            }
+          }
+        }
+
         final userProfile = UserProfileEntity(
-          id: data['id']?.toString() ?? '',
-          name: data['username']?.toString() ?? '',
+          id: targetUserId,
+          name: username,
           avatarUrl: data['avatar']?.toString() ?? '',
-          coverUrl: data['cover_image']?.toString() ?? data['coverImage']?.toString() ?? '',
+          coverUrl:
+              data['cover_image']?.toString() ??
+              data['coverImage']?.toString() ??
+              '',
           bio: data['description']?.toString() ?? '',
           location: 'Hà Nội, Việt Nam',
           link: 'github.com/profile',
-          role: data['role']?.toString() ?? '',
+          role: fetchedRole,
           isOnline: data['online'] == '1',
         );
 
         // Lấy danh sách bài viết
-        final targetUserId = userId ?? data['id']?.toString() ?? '';
         final postResponse = await ApiService.getListPosts(
-          GetListPostsRequest(token: token, userId: targetUserId, index: '0', count: '100'), // Mặc định lấy nhiều chút cho profile
+          GetListPostsRequest(
+            token: token,
+            userId: targetUserId,
+            index: '0',
+            count: '100',
+          ), // Mặc định lấy nhiều chút cho profile
         );
 
         List<Map<String, dynamic>> userPosts = [];
         if (postResponse.code == '1000' || postResponse.code == '200') {
-          userPosts = (postResponse.posts ?? []).map((e) => e as Map<String, dynamic>).toList();
+          userPosts = (postResponse.posts ?? [])
+              .map((e) => e as Map<String, dynamic>)
+              .toList();
         }
 
-        emit(ProfileLoaded(
-          userProfile: userProfile,
-          userPosts: userPosts,
-        ));
+        emit(ProfileLoaded(userProfile: userProfile, userPosts: userPosts));
       } else {
-        emit(ProfileError(message: result['message'] ?? 'Không thể tải thông tin trang cá nhân'));
+        emit(
+          ProfileError(
+            message:
+                result['message'] ?? 'Không thể tải thông tin trang cá nhân',
+          ),
+        );
       }
     } catch (e) {
       emit(ProfileError(message: e.toString()));
@@ -83,7 +129,11 @@ class ProfileCubit extends Cubit<ProfileState> {
           loadProfileData(token: token, userId: currentState.userProfile.id);
           return true;
         } else {
-          emit(ProfileError(message: result['message'] ?? 'Lỗi cập nhật thông tin'));
+          emit(
+            ProfileError(
+              message: result['message'] ?? 'Lỗi cập nhật thông tin',
+            ),
+          );
           emit(currentState);
           return false;
         }
@@ -96,7 +146,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     return false;
   }
 
-  Future<bool> blockUser({required String token, required String userId}) async {
+  Future<bool> blockUser({
+    required String token,
+    required String userId,
+  }) async {
     final currentState = state;
     if (currentState is ProfileLoaded) {
       try {
@@ -111,7 +164,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     return false;
   }
 
-  Future<bool> requestCourse({required String token, required String courseId, required String userId}) async {
+  Future<bool> requestCourse({
+    required String token,
+    required String courseId,
+    required String userId,
+  }) async {
     try {
       final result = await ApiService.setRequestCourse(token, courseId, userId);
       if (result['code'] == '1000' || result['code'] == '200') {
@@ -128,9 +185,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       final currentState = state as ProfileLoaded;
       final updatedPosts = currentState.userPosts.map((post) {
         if (post['id'] == postId) {
-          final bool isLiked = (post['isLiked'] ?? false) || post['is_liked'] == '1';
+          final bool isLiked =
+              (post['isLiked'] ?? false) || post['is_liked'] == '1';
           int currentLikes = int.tryParse(post['like']?.toString() ?? '0') ?? 0;
-          
+
           if (!isLiked) {
             currentLikes++;
           } else {
@@ -147,11 +205,13 @@ class ProfileCubit extends Cubit<ProfileState> {
         }
         return post;
       }).toList();
-      
-      emit(ProfileLoaded(
-        userProfile: currentState.userProfile,
-        userPosts: updatedPosts,
-      ));
+
+      emit(
+        ProfileLoaded(
+          userProfile: currentState.userProfile,
+          userPosts: updatedPosts,
+        ),
+      );
     }
   }
 }

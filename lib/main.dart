@@ -13,12 +13,8 @@ void main() {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<AuthCubit>(
-          create: (_) => AuthCubit(),
-        ),
-        BlocProvider<ChatCubit>(
-          create: (_) => ChatCubit()
-        )
+        BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
+        BlocProvider<ChatCubit>(create: (_) => ChatCubit()),
       ],
       child: const MyApp(),
     ),
@@ -34,9 +30,7 @@ class MyApp extends StatelessWidget {
       title: 'EduSocial AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.robotoTextTheme(
-          Theme.of(context).textTheme,
-        ),
+        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
         scaffoldBackgroundColor: AppColors.scaffoldBackground,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.surfaceWhite,

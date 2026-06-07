@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +12,7 @@ import '../bloc/feed_cubit.dart';
 import '../bloc/feed_state.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_state.dart';
+import 'package:flutter_ai_tapchuan/services/api_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,8 +28,52 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _HomeView extends StatelessWidget {
+class _HomeView extends StatefulWidget {
   const _HomeView();
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> {
+  int _unreadChatCount = 0;
+  Timer? _unreadTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+    _unreadTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _loadUnreadCount();
+    });
+  }
+
+  @override
+  void dispose() {
+    _unreadTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    if (!mounted) return;
+    final token = context.read<AuthCubit>().state.token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final result = await ApiService.getListConversation(token, 0, 1);
+      if (result['code'] == '1000' && mounted) {
+        final data = result['data'];
+        final numNewStr = data['numNewMessage']?.toString() ?? '0';
+        final count = int.tryParse(numNewStr) ?? 0;
+        if (mounted) {
+          setState(() {
+            _unreadChatCount = count;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading unread count: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,15 +142,15 @@ class _HomeView extends StatelessWidget {
               ),
               // --- KẾT THÚC NÚT KÍNH LÚP ---
               const SizedBox(width: 8.0),
-              _buildAppBarIcon(
-                Icons.messenger_outline,
+              _buildChatIconWithBadge(
+                unreadCount: _unreadChatCount,
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const ChatScreen()),
-                  );
+                  ).then((_) => _loadUnreadCount());
                 },
-              ), // Tương đương Messenger
+              ),
               const SizedBox(width: 12.0),
             ],
           ),
@@ -210,6 +256,52 @@ class _HomeView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChatIconWithBadge({required int unreadCount, VoidCallback? onPressed}) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          decoration: const BoxDecoration(
+            color: AppColors.scaffoldBackground,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.messenger_outline, color: AppColors.textPrimary, size: 22),
+            onPressed: onPressed,
+            splashRadius: 24,
+          ),
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: -2,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: Center(
+                child: Text(
+                  unreadCount > 9 ? '9+' : '$unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

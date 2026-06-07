@@ -13,6 +13,11 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit() : super(const ChatState.initial());
 
   // HÀM KÍCH HOẠT KHI VÀO PHÒNG CHAT
+  void reset() {
+    _conversationId = null;
+    emit(const ChatState.initial());
+  }
+
   void joinChatRoom({
     required String token,
     required Map<String, dynamic> myInfo,       // Thông tin của chính bạn {id, avatar, name}
@@ -29,6 +34,8 @@ class ChatCubit extends Cubit<ChatState> {
     }
     
     final myRealID = myInfo['id'] ?? '';
+    final bool alreadyConnected = socket != null && socket!.connected;
+
     // 1. Cấu hình và kết nối Socket (giữ cấu hình của nhóm bạn)
     socket ??= IO.io('https://group1.it4788.sukkaito.id.vn', IO.OptionBuilder()
     .setTransports(['websocket']) // Bắt buộc dùng giao thức websocket
@@ -57,25 +64,12 @@ class ChatCubit extends Cubit<ChatState> {
       'content': '', // Vào phòng chat nên content để rỗng [cite: 88]
     };
 
-    // 3. ĐÓN ĐẦU SỰ KIỆN KẾT NỐI THÀNH CÔNG (QUAN TRỌNG)
-    socket!.onConnect((_) {
-      debugPrint("=== [Socket.IO] Kết nối thành công tới Server trường! ===");
-      
-      // Chỉ khi Server xác nhận ONLINE hoàn toàn, mới bắn 'joinchat'
+    void handleConnected() {
+      debugPrint("=== [Socket.IO] Tham gia joinchat cho conversationId: $_conversationId ===");
       socket!.emit('joinchat', {
         'conversationId': _conversationId ?? partnerInfo['conversationId'] ?? '' // Hoặc ID phòng chat nếu có
       });
 
-      // Chạy heartbeat 'available' định kỳ 10-20 giây một lần để server cập nhật thời gian sống
-      Timer.periodic(const Duration(seconds: 15), (timer) {
-        if (socket != null && socket!.connected) {
-          debugPrint("=== [Socket.IO] Gửi sự kiện 'available' định kỳ để giữ kết nối sống ===");
-          socket!.emit('available', {});
-        } else {
-          timer.cancel();
-        }
-      });
-      
       // Mở cổng luôn luôn lắng nghe tin nhắn mới đập nhả từ Server
       listenToIncomingMessages();
 
@@ -85,7 +79,28 @@ class ChatCubit extends Cubit<ChatState> {
         isConnected: true,
         messages: state.messages, // Giữ lại tin nhắn cũ nếu có
       ));
+    }
+
+    // 3. ĐÓN ĐẦU SỰ KIỆN KẾT NỐI THÀNH CÔNG (QUAN TRỌNG)
+    socket!.onConnect((_) {
+      debugPrint("=== [Socket.IO] Kết nối thành công tới Server trường! ===");
+      handleConnected();
+
+      // Chạy heartbeat 'available' định kỳ 10-20 giây một lần để server cập nhật thời gian sống
+      _availableTimer?.cancel();
+      _availableTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+        if (socket != null && socket!.connected) {
+          debugPrint("=== [Socket.IO] Gửi sự kiện 'available' định kỳ để giữ kết nối sống ===");
+          socket!.emit('available', {});
+        } else {
+          timer.cancel();
+        }
+      });
     });
+
+    if (alreadyConnected) {
+      handleConnected();
+    }
 
     // Lắng nghe lỗi kết nối để debug nếu Server chặn hoặc sai Path
     socket!.onConnectError((data) {

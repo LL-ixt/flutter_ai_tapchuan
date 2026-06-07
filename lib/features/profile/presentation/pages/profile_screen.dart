@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../../../core/widgets/post_card.dart';
@@ -21,16 +22,96 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final token = context.read<AuthCubit>().state.token ?? "";
+    final currentUserId = context.read<AuthCubit>().state.userId ?? "";
+    final currentRole = context.read<AuthCubit>().state.role;
     return BlocProvider(
-      create: (context) => ProfileCubit()..loadProfileData(token: token, userId: userId),
+      create: (context) => ProfileCubit()
+        ..loadProfileData(
+          token: token,
+          userId: userId,
+          currentUserId: currentUserId,
+          currentRole: currentRole,
+        ),
       child: _ProfileView(userId: userId),
     );
   }
 }
 
-class _ProfileView extends StatelessWidget {
+class _ProfileView extends StatefulWidget {
   final String? userId;
   const _ProfileView({this.userId});
+
+  @override
+  State<_ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<_ProfileView> {
+  bool _isRegistered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRegistrationStatus();
+  }
+
+  Future<void> _checkRegistrationStatus([String? targetId]) async {
+    final authState = context.read<AuthCubit>().state;
+    final myUserId = authState.userId ?? "";
+    final targetLecturerId = targetId ?? widget.userId ?? myUserId;
+    if (myUserId.isNotEmpty && targetLecturerId.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final registeredList = prefs.getStringList('registered_lecturers_$myUserId') ?? [];
+      if (mounted) {
+        setState(() {
+          _isRegistered = registeredList.contains(targetLecturerId);
+        });
+      }
+    }
+  }
+
+  Future<void> _saveRegistration(String targetId) async {
+    final authState = context.read<AuthCubit>().state;
+    final myUserId = authState.userId ?? "";
+    if (myUserId.isNotEmpty && targetId.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final registeredList = prefs.getStringList('registered_lecturers_$myUserId') ?? [];
+      if (!registeredList.contains(targetId)) {
+        registeredList.add(targetId);
+        await prefs.setStringList('registered_lecturers_$myUserId', registeredList);
+      }
+      if (mounted) {
+        setState(() {
+          _isRegistered = true;
+        });
+      }
+    }
+  }
+
+  bool _isTeacher(String? role) {
+    if (role == null) return false;
+    final r = role.toLowerCase().trim();
+    return r == 'gv' ||
+        r == '2' ||
+        r == 'giảng viên' ||
+        r == 'giang viên' ||
+        r == 'giangvien' ||
+        r == 'teacher' ||
+        r.contains('giáo viên') ||
+        r.contains('giao vien');
+  }
+
+  bool _isStudent(String? role) {
+    if (role == null) return false;
+    final r = role.toLowerCase().trim();
+    return r == 'hv' ||
+        r == 'hs' ||
+        r == '1' ||
+        r == 'học viên' ||
+        r == 'hoc vien' ||
+        r == 'học sinh' ||
+        r == 'hoc sinh' ||
+        r == 'student';
+  }
 
   void _showEditProfileSheet(BuildContext context, UserProfileEntity user) {
     final nameController = TextEditingController(text: user.name);
@@ -104,6 +185,7 @@ class _ProfileView extends StatelessWidget {
                             image: newCoverFile != null
                                 ? (kIsWeb
                                     ? DecorationImage(
+                                        // ignore: deprecated_member_use
                                         image: MemoryImage(newCoverFile!.bytes!),
                                         fit: BoxFit.cover,
                                       )
@@ -156,6 +238,7 @@ class _ProfileView extends StatelessWidget {
                                 backgroundColor: Colors.grey[200],
                                 backgroundImage: newAvatarFile != null
                                     ? (kIsWeb
+                                        // ignore: deprecated_member_use
                                         ? MemoryImage(newAvatarFile!.bytes!) as ImageProvider
                                         : FileImage(File(newAvatarFile!.path!)) as ImageProvider)
                                     : (user.avatarUrl.isNotEmpty
@@ -214,9 +297,11 @@ class _ProfileView extends StatelessWidget {
                             username: nameController.text.trim(),
                             description: bioController.text.trim(),
                             avatar: kIsWeb ? null : (newAvatarFile != null ? File(newAvatarFile!.path!) : null),
+                            // ignore: deprecated_member_use
                             avatarBytes: kIsWeb ? newAvatarFile?.bytes : null,
                             avatarName: newAvatarFile?.name,
                             coverImage: kIsWeb ? null : (newCoverFile != null ? File(newCoverFile!.path!) : null),
+                            // ignore: deprecated_member_use
                             coverImageBytes: kIsWeb ? newCoverFile?.bytes : null,
                             coverImageName: newCoverFile?.name,
                           );
@@ -255,6 +340,8 @@ class _ProfileView extends StatelessWidget {
                 avatar: state.userProfile.avatarUrl,
               );
             }
+            // Load registration status for the loaded profile ID
+            _checkRegistrationStatus(state.userProfile.id);
           }
         },
         child: BlocBuilder<ProfileCubit, ProfileState>(
@@ -282,7 +369,7 @@ class _ProfileView extends StatelessWidget {
 
   Widget _buildAppBar(BuildContext context, String title) {
     final currentUserId = context.read<AuthCubit>().state.userId;
-    final isOtherUser = userId != null && userId != currentUserId;
+    final isOtherUser = widget.userId != null && widget.userId != currentUserId;
 
     return SliverAppBar(
       backgroundColor: AppColors.surfaceWhite,
@@ -322,7 +409,7 @@ class _ProfileView extends StatelessWidget {
                 );
                 if (confirm == true && context.mounted) {
                   final token = context.read<AuthCubit>().state.token ?? "";
-                  final success = await context.read<ProfileCubit>().blockUser(token: token, userId: userId!);
+                  final success = await context.read<ProfileCubit>().blockUser(token: token, userId: widget.userId!);
                   if (success && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã chặn người dùng này')));
                     Navigator.pop(context); // Quay lại trang trước
@@ -345,7 +432,7 @@ class _ProfileView extends StatelessWidget {
 
   Widget _buildProfileHeader(BuildContext context, UserProfileEntity user) {
     final currentUserId = context.read<AuthCubit>().state.userId;
-    final isOtherUser = userId != null && userId != currentUserId;
+    final isOtherUser = widget.userId != null && widget.userId != currentUserId;
 
     return SliverToBoxAdapter(
       child: Container(
@@ -429,11 +516,11 @@ class _ProfileView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: (user.role == 'GV' || user.role == '2') ? AppColors.primaryBlue : Colors.green,
+                          color: _isTeacher(user.role) ? AppColors.primaryBlue : Colors.green,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          (user.role == 'GV' || user.role == '2') ? 'Giáo viên' : 'Học viên',
+                          _isTeacher(user.role) ? 'Giáo viên' : 'Học viên',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -467,62 +554,69 @@ class _ProfileView extends StatelessWidget {
                   else
                     Row(
                       children: [
-                        if ((user.role != 'GV' || user.role != '2') && 
-                            (context.read<AuthCubit>().state.role == 'HS' || context.read<AuthCubit>().state.role != '1')) ...[
+                        if (_isTeacher(user.role) && 
+                            _isStudent(context.read<AuthCubit>().state.role)) ...[
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () async {
-                                 final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Gửi đăng ký'),
-                                      content: const Text('Bạn muốn gửi yêu cầu đăng ký học đến giáo viên này?'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(ctx, true), 
-                                          child: const Text('Gửi', style: TextStyle(color: AppColors.primaryBlue))
+                              onPressed: _isRegistered
+                                  ? null
+                                  : () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text('Gửi đăng ký'),
+                                          content: const Text('Bạn muốn gửi yêu cầu đăng ký học đến giáo viên này?'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, true), 
+                                              child: const Text('Gửi', style: TextStyle(color: AppColors.primaryBlue))
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true && context.mounted) {
-                                     final token = context.read<AuthCubit>().state.token ?? "";
-                                     final myUserId = context.read<AuthCubit>().state.userId ?? "";
-                                     final success = await context.read<ProfileCubit>().requestCourse(
-                                       token: token,
-                                       courseId: user.id,
-                                       userId: myUserId,
-                                     );
-                                     if (success && context.mounted) {
-                                       DialogUtils.showNotificationDialog(
-                                         context: context,
-                                         title: 'Thành công',
-                                         message: 'Đã gửi yêu cầu thành công!',
-                                         isSuccess: true,
-                                       );
-                                     } else if (context.mounted) {
-                                       DialogUtils.showNotificationDialog(
-                                         context: context,
-                                         title: 'Thất bại',
-                                         message: 'Có thể là một trong các nguyên nhân sau:\nBạn đã gửi yêu cầu đăng ký rồi\nNgười dùng này chưa xác thực\nLỗi hệ thống mà chúng tôi đang khắc phục',
-                                         isSuccess: false,
-                                       );
-                                     }
-                                  }
-                              },
+                                      );
+                                      if (confirm == true && context.mounted) {
+                                        final token = context.read<AuthCubit>().state.token ?? "";
+                                        final myUserId = context.read<AuthCubit>().state.userId ?? "";
+                                        final success = await context.read<ProfileCubit>().requestCourse(
+                                          token: token,
+                                          courseId: user.id,
+                                          userId: myUserId,
+                                        );
+                                        if (success && context.mounted) {
+                                          await _saveRegistration(user.id);
+                                          if (context.mounted) {
+                                            DialogUtils.showNotificationDialog(
+                                              context: context,
+                                              title: 'Thành công',
+                                              message: 'Đã gửi yêu cầu thành công!',
+                                              isSuccess: true,
+                                            );
+                                          }
+                                        } else if (context.mounted) {
+                                          DialogUtils.showNotificationDialog(
+                                            context: context,
+                                            title: 'Thất bại',
+                                            message: 'Có thể là một trong các nguyên nhân sau:\nBạn đã gửi yêu cầu đăng ký rồi\nNgười dùng này chưa xác thực\nLỗi hệ thống mà chúng tôi đang khắc phục',
+                                            isSuccess: false,
+                                          );
+                                        }
+                                      }
+                                  },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryBlue,
+                                backgroundColor: _isRegistered ? Colors.grey[400] : AppColors.primaryBlue,
+                                disabledBackgroundColor: Colors.grey[400],
+                                disabledForegroundColor: Colors.white70,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                               ),
-                              child: const Text(
-                                'Gửi đăng ký',
+                              child: Text(
+                                _isRegistered ? 'Đã gửi yêu cầu' : 'Gửi đăng ký',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: _isRegistered ? Colors.white70 : Colors.white,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
