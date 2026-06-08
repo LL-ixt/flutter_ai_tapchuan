@@ -156,61 +156,66 @@ class _HomeViewState extends State<_HomeView> {
           ),
 
           // Create Post Box
-          SliverToBoxAdapter(
-            child: Container(
-              color: AppColors.surfaceWhite,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
-              margin: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, authState) {
-                      return AvatarWidget(
+          BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, authState) {
+              final r = (authState.role ?? '').trim().toUpperCase();
+              final isTeacher = r == 'GV' || r == 'GIÁO VIÊN' || r == 'GIẢNG VIÊN';
+              if (!isTeacher) {
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }
+              return SliverToBoxAdapter(
+                child: Container(
+                  color: AppColors.surfaceWhite,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  margin: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      AvatarWidget(
                         imageUrl: authState.avatar,
                         radius: 20,
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        final feedCubit = context.read<FeedCubit>();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BlocProvider.value(
-                              value: feedCubit,
-                              child: const CreatePostScreen(),
-                            ),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.dividerBorder),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            final feedCubit = context.read<FeedCubit>();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BlocProvider.value(
+                                  value: feedCubit,
+                                  child: const CreatePostScreen(),
+                                ),
+                              ),
+                            );
+                          },
                           borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Text(
-                          'Bạn đang nghĩ gì?',
-                          style: AppTextStyles.bodyMain.copyWith(
-                            color: AppColors.textSecondary,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 12.0,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.dividerBorder),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Text(
+                              'Bạn đang nghĩ gì?',
+                              style: AppTextStyles.bodyMain.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
 
           // Render List Post bằng BlocBuilder

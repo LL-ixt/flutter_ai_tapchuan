@@ -341,20 +341,6 @@ class _ChatRoomDetailScreenState extends State<ChatRoomDetailScreen> {
             );
           },
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.call, color: AppColors.primaryBlue),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.videocam, color: AppColors.primaryBlue),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.info, color: AppColors.primaryBlue),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -554,32 +540,6 @@ class _ChatRoomDetailScreenState extends State<ChatRoomDetailScreen> {
               ),
               child: Row(
                 children: [
-                  // Nút tiện ích bên trái ô nhập liệu
-                  IconButton(
-                    icon: const Icon(
-                      Icons.camera_alt,
-                      color: AppColors.primaryBlue,
-                      size: 22,
-                    ),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.photo,
-                      color: AppColors.primaryBlue,
-                      size: 22,
-                    ),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.mic,
-                      color: AppColors.primaryBlue,
-                      size: 22,
-                    ),
-                    onPressed: () {},
-                  ),
-
                   // Ô nhập liệu dạng Capsule
                   Expanded(
                     child: Container(

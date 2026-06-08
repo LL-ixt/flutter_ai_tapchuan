@@ -79,9 +79,19 @@ class ProfileCubit extends Cubit<ProfileState> {
 
         List<Map<String, dynamic>> userPosts = [];
         if (postResponse.code == '1000' || postResponse.code == '200') {
-          userPosts = (postResponse.posts ?? [])
-              .map((e) => e as Map<String, dynamic>)
-              .toList();
+          userPosts = (postResponse.posts ?? []).map((e) {
+            final postMap = Map<String, dynamic>.from(e as Map);
+            if (postMap.containsKey('post_id')) {
+              postMap['id'] = postMap['post_id'];
+            }
+            if (postMap.containsKey('is_liked')) {
+              postMap['isLiked'] = postMap['is_liked'].toString() == '1';
+            }
+            if (postMap.containsKey('created')) {
+              postMap['created_at'] = postMap['created'];
+            }
+            return postMap;
+          }).toList();
         }
 
         emit(ProfileLoaded(userProfile: userProfile, userPosts: userPosts));

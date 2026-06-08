@@ -1,30 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/main.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/chat/presentation/bloc/chat_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/notification/presentation/bloc/notification_cubit.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('EduSocial AI smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
+          BlocProvider<ChatCubit>(create: (_) => ChatCubit()),
+          BlocProvider<NotificationCubit>(
+            create: (context) => NotificationCubit(
+              authCubit: context.read<AuthCubit>(),
+            ),
+          ),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify application starts
+    expect(find.byType(MyApp), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Advance time to clear pending timers (e.g. from NotificationCubit status polling)
+    await tester.pump(const Duration(seconds: 5));
   });
 }

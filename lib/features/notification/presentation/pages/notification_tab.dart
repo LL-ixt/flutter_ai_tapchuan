@@ -9,92 +9,108 @@ import '../widgets/notification_tile.dart';
 class NotificationTab extends StatelessWidget {
   const NotificationTab({super.key});
 
-  String? _currentToken(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
+    NotificationCubit? existingCubit;
     try {
-      return context.read<AuthCubit>().state.token;
+      existingCubit = BlocProvider.of<NotificationCubit>(context);
     } catch (_) {
-      return null;
+      // not found
+    }
+
+    if (existingCubit != null) {
+      return const _NotificationTabView();
+    } else {
+      AuthCubit? authCubit;
+      try {
+        authCubit = context.read<AuthCubit>();
+      } catch (_) {}
+      return BlocProvider(
+        create: (context) => NotificationCubit(
+          authCubit: authCubit,
+        )..loadNotifications(),
+        child: const _NotificationTabView(),
+      );
     }
   }
+}
+
+class _NotificationTabView extends StatelessWidget {
+  const _NotificationTabView();
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          NotificationCubit(token: _currentToken(context))..loadNotifications(),
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: AppColors.surfaceWhite,
+      appBar: AppBar(
         backgroundColor: AppColors.surfaceWhite,
-        appBar: AppBar(
-          backgroundColor: AppColors.surfaceWhite,
-          elevation: 0,
-          title: const Text(
-            'Thông báo',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
+        elevation: 0,
+        title: const Text(
+          'Thông báo',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search, color: AppColors.textPrimary),
-              onPressed: () {
-                // Lệnh phóng sang trang Tìm Kiếm
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchPage()),
-                );
-              },
-            ),
-          ],
         ),
-        body: BlocBuilder<NotificationCubit, NotificationState>(
-          builder: (context, state) {
-            if (state is NotificationLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is NotificationError) {
-              return Center(
-                child: Text(
-                  state.message,
-                  style: const TextStyle(color: AppColors.errorRed),
-                ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: AppColors.textPrimary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchPage()),
               );
-            } else if (state is NotificationLoaded) {
-              final notifications = state.notifications;
+            },
+          ),
+        ],
+      ),
+      body: BlocBuilder<NotificationCubit, NotificationState>(
+        builder: (context, state) {
+          if (state is NotificationLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is NotificationError) {
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(color: AppColors.errorRed),
+              ),
+            );
+          } else if (state is NotificationLoaded) {
+            final notifications = state.notifications;
 
-              if (notifications.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Không có thông báo nào.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  await context.read<NotificationCubit>().loadNotifications();
-                },
-                child: ListView.builder(
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = notifications[index];
-                    return NotificationTile(
-                      notification: notification,
-                      onTap: () async {
-                        await context.read<NotificationCubit>().markAsRead(
-                          notification.id,
-                        );
-                      },
-                    );
-                  },
+            if (notifications.isEmpty) {
+              return const Center(
+                child: Text(
+                  'Không có thông báo nào.',
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               );
             }
-            return const SizedBox.shrink();
-          },
-        ),
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                await context.read<NotificationCubit>().loadNotifications();
+              },
+              child: ListView.builder(
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  return NotificationTile(
+                    notification: notification,
+                    onTap: () async {
+                      await context.read<NotificationCubit>().markAsRead(
+                        notification.id,
+                      );
+                    },
+                  );
+                },
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

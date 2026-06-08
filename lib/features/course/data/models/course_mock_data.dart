@@ -10,6 +10,7 @@ class CourseMockData {
         coverUrl: 'https://via.placeholder.com/150/1877F2/FFFFFF?text=Course+1',
         instructor: 'Giảng viên Lê B',
         progress: 45,
+        instructorId: 'inst_b',
       ),
       CourseEntity(
         id: 'c2',
@@ -17,6 +18,7 @@ class CourseMockData {
         coverUrl: 'https://via.placeholder.com/150/42B72A/FFFFFF?text=Course+2',
         instructor: 'Võ sư Nguyễn D',
         progress: 10,
+        instructorId: 'inst_d',
       ),
     ];
   }

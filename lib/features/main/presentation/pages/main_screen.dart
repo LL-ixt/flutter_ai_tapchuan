@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/core/constants/color_constants.dart';
 import '../../../feed/presentation/pages/home_screen.dart';
@@ -7,6 +8,7 @@ import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../main/presentation/pages/menu_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/notification/presentation/bloc/notification_cubit.dart';
 import 'package:flutter_ai_tapchuan/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   String _unreadNotifications = '0';
   String _unreadMessages = '0';
   late final PageController _pageController;
+  Timer? _versionTimer;
 
   Future<void> _checkNewVersion() async {
     final token = context.read<AuthCubit>().state.token ?? '';
@@ -129,10 +132,16 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
     _checkNewVersion();
+    // Load notifications on startup
+    context.read<NotificationCubit>().loadNotifications();
+    _versionTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _checkNewVersion();
+    });
   }
 
   @override
   void dispose() {
+    _versionTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -142,6 +151,9 @@ class _MainScreenState extends State<MainScreen> {
       _selectedIndex = index;
     });
     _pageController.jumpToPage(index);
+    if (index == 2) {
+      context.read<NotificationCubit>().loadNotifications();
+    }
   }
 
   @override
@@ -153,6 +165,9 @@ class _MainScreenState extends State<MainScreen> {
           setState(() {
             _selectedIndex = index;
           });
+          if (index == 2) {
+            context.read<NotificationCubit>().loadNotifications();
+          }
         },
         children: _screens,
       ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_tapchuan/features/course/presentation/pages/course_request_tab.dart';
+import 'package:flutter_ai_tapchuan/features/course/presentation/pages/search_teacher_tab.dart';
+import 'package:flutter_ai_tapchuan/features/course/presentation/pages/teacher_assignments_tab.dart';
+import 'package:flutter_ai_tapchuan/features/course/presentation/pages/student_assignment_stats_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/color_constants.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -71,7 +74,7 @@ class _CourseTabState extends State<CourseTab> {
               indicatorColor: AppColors.primaryBlue,
               tabs: [
                 Tab(text: isTeacher ? 'Yêu cầu học' : 'Tìm giáo viên'),
-                const Tab(text: 'Đã đăng ký'),
+                Tab(text: isTeacher ? 'Thống kê các bài tập' : 'Đã đăng ký'),
               ],
             ),
           ),
@@ -86,9 +89,9 @@ class _CourseTabState extends State<CourseTab> {
                   children: [
                     isTeacher 
                         ? const CourseRequestTab() 
-                        : const Center(child: Text('Chức năng đang phát triển', style: TextStyle(fontSize: 16))),
+                        : const SearchTeacherTab(),
                     isTeacher 
-                        ? const Center(child: Text('Giáo viên không có khoá học đã đăng ký.'))
+                        ? const TeacherAssignmentsTab()
                         : _buildRegisteredCourses(state),
                   ],
                 );
@@ -124,58 +127,68 @@ class _CourseTabState extends State<CourseTab> {
           elevation: 1,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    course.coverUrl,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StudentAssignmentStatsScreen(
+                    instructorId: course.instructorId,
+                    instructorName: course.instructor,
+                    courseId: course.id,
+                    courseName: course.title,
+                  ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      course.coverUrl,
                       width: 80,
                       height: 80,
-                      color: AppColors.dividerBorder,
-                      child: const Icon(Icons.book),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 80,
+                        color: AppColors.dividerBorder,
+                        child: const Icon(Icons.book),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Roboto',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          course.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Roboto',
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        course.instructor,
-                        style: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: course.progress / 100,
-                        backgroundColor: AppColors.dividerBorder,
-                        color: AppColors.primaryBlue,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tiến độ: ${course.progress}%',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          course.instructor,
+                          style: const TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
             ),
           ),
         );

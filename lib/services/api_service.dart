@@ -18,6 +18,28 @@ import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_mod
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
 
+  // Callback to handle token invalidation
+  static void Function()? onTokenInvalid;
+
+  static dynamic _decodeAndCheck(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) {
+        final code = decoded['code']?.toString();
+        if (code == '9998' || code == '1009') {
+          onTokenInvalid?.call();
+        }
+      }
+      return decoded;
+    } catch (_) {
+      try {
+        return jsonDecode(body);
+      } catch (e) {
+        rethrow;
+      }
+    }
+  }
+
   static Future<bool> checkInternet() async {
     try {
       if (kIsWeb) {
@@ -26,8 +48,9 @@ class ApiService {
             .timeout(const Duration(seconds: 2));
         return true;
       } else {
-        final result = await InternetAddress.lookup('google.com')
-            .timeout(const Duration(seconds: 2));
+        final result = await InternetAddress.lookup(
+          'google.com',
+        ).timeout(const Duration(seconds: 2));
         return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
       }
     } catch (_) {
@@ -42,7 +65,9 @@ class ApiService {
         date = DateTime.parse(timestamp).toLocal();
       } else {
         double timestampDouble = double.parse(timestamp);
-        date = DateTime.fromMillisecondsSinceEpoch((timestampDouble * 1000).toInt());
+        date = DateTime.fromMillisecondsSinceEpoch(
+          (timestampDouble * 1000).toInt(),
+        );
       }
       String pad(int n) => n.toString().padLeft(2, '0');
       return '${pad(date.day)}/${pad(date.month)}/${date.year} ${pad(date.hour)}:${pad(date.minute)}';
@@ -80,7 +105,7 @@ class ApiService {
       print("status code $endpoint: ${response.statusCode}"); // Debug log
       print("=== API $endpoint Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -104,21 +129,20 @@ class ApiService {
       };
     }
 
-
-
-
     final url = Uri.parse('$baseUrl/login');
     //print("=== APIService.login called with phone: $phone ==="); // Debug log
     try {
-      final response = await http.post(
-        url,
-        body: {
-          'phonenumber': phone,
-          'password': password,
-          'devtoken': 'mock_device',
-          //'uuid': 'mock_device',//await DeviceUtils.getHashedDeviceID(),
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            url,
+            body: {
+              'phonenumber': phone,
+              'password': password,
+              'devtoken': 'mock_device',
+              //'uuid': 'mock_device',//await DeviceUtils.getHashedDeviceID(),
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       print("status code login: ${response.statusCode}"); // Debug log
       print("=== API Login Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
@@ -148,22 +172,20 @@ class ApiService {
       };
     }
 
-
-
-
-
     //print("=== APIService.signup called with phone: $phone, role: $role ==="); // Debug log
     final url = Uri.parse('$baseUrl/signup');
     try {
-      final response = await http.post(
-        url,
-        body: {
-          'phonenumber': phone,
-          'password': password,
-          'uuid': 'mock_device', //await DeviceUtils.getHashedDeviceID(),
-          'role': role,
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            url,
+            body: {
+              'phonenumber': phone,
+              'password': password,
+              'uuid': 'mock_device', //await DeviceUtils.getHashedDeviceID(),
+              'role': role,
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       print("status code signup: ${response.statusCode}"); // Debug log
       print("=== API Signup Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
@@ -201,10 +223,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getVerifyCode(String phone) async {
     final url = Uri.parse('$baseUrl/get_verify_code');
     try {
-      final response = await http.post(
-        url,
-        body: {'phonenumber': phone},
-      );
+      final response = await http.post(url, body: {'phonenumber': phone});
       print("status code getVerifyCode: ${response.statusCode}");
       print("=== API Get Verify Code Response: ${response.body}");
       if (response.statusCode == 200) {
@@ -744,7 +763,7 @@ class ApiService {
       print("=== API Add Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return AddPostResponse.fromJson(jsonDecode(response.body));
+        return AddPostResponse.fromJson(_decodeAndCheck(response.body));
       } else if (response.statusCode == 404) {
         return AddPostResponse(
           code: '404',
@@ -769,10 +788,12 @@ class ApiService {
       print("=== API Get Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
+        var jsonResponse = _decodeAndCheck(response.body);
         if (jsonResponse['data'] != null && jsonResponse['data'] is Map) {
           if (jsonResponse['data']['created'] != null) {
-            jsonResponse['data']['created'] = _formatTimestamp(jsonResponse['data']['created'].toString());
+            jsonResponse['data']['created'] = _formatTimestamp(
+              jsonResponse['data']['created'].toString(),
+            );
           }
         }
         return GetPostResponse.fromJson(jsonResponse);
@@ -922,11 +943,13 @@ class ApiService {
         } else if (rawData is Map && rawData['data'] is List) {
           list = rawData['data'];
         }
-        
+
         if (list != null) {
           for (var comment in list) {
             if (comment is Map && comment['created'] != null) {
-              comment['created'] = _formatTimestamp(comment['created'].toString());
+              comment['created'] = _formatTimestamp(
+                comment['created'].toString(),
+              );
             }
           }
         }
@@ -952,8 +975,10 @@ class ApiService {
       //print("=== API Get List Posts Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['data'] != null && jsonResponse['data'] is Map && jsonResponse['data']['posts'] is List) {
+        var jsonResponse = _decodeAndCheck(response.body);
+        if (jsonResponse['data'] != null &&
+            jsonResponse['data'] is Map &&
+            jsonResponse['data']['posts'] is List) {
           for (var post in jsonResponse['data']['posts']) {
             if (post is Map && post['created'] != null) {
               post['created'] = _formatTimestamp(post['created'].toString());
@@ -1332,7 +1357,10 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -1349,18 +1377,17 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        body: {
-          'token': token,
-          'user_id': userId,
-          'is_accept': isAccept,
-        },
+        body: {'token': token, 'user_id': userId, 'is_accept': isAccept},
       );
       print("status code setApproveEnrollment: ${response.statusCode}");
       print("=== API Set Approve Enrollment Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -1377,18 +1404,17 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        body: {
-          'token': token,
-          'course_id': courseId,
-          'user_id': userId,
-        },
+        body: {'token': token, 'course_id': courseId, 'user_id': userId},
       );
       print("status code setRequestCourse: ${response.statusCode}");
       print("=== API Set Request Course Response: ${response.body}");
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'code': '1001', 'message': 'Không thể kết nối Internet hoặc Server lỗi'};
+        return {
+          'code': '1001',
+          'message': 'Không thể kết nối Internet hoặc Server lỗi',
+        };
       }
     } catch (e) {
       return {'code': '9999', 'message': 'Exception error: $e'};
@@ -1404,11 +1430,7 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        body: {
-          'token': token,
-          'last_update': lastUpdate,
-          'user_id': userId,
-        },
+        body: {'token': token, 'last_update': lastUpdate, 'user_id': userId},
       );
       print("status code checkNewVersion: ${response.statusCode}");
       print("=== API Check New Version Response: ${response.body}");

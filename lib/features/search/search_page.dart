@@ -229,13 +229,28 @@ class _SearchPageViewState extends State<_SearchPageView> {
                 _matchesSearch(name, _searchQuery);
           }).toList();
 
-          final posts = rawPosts.where((p) {
-            if (p is! Map<String, dynamic>) return false;
-            final described = p['described']?.toString() ?? '';
-            final title = p['title']?.toString() ?? '';
-            return _matchesSearch(described, _searchQuery) ||
-                _matchesSearch(title, _searchQuery);
-          }).toList();
+          final posts = rawPosts
+              .where((p) {
+                if (p is! Map<String, dynamic>) return false;
+                final described = p['described']?.toString() ?? '';
+                final title = p['title']?.toString() ?? '';
+                return _matchesSearch(described, _searchQuery) ||
+                    _matchesSearch(title, _searchQuery);
+              })
+              .map((e) {
+                final postMap = Map<String, dynamic>.from(e as Map);
+                if (postMap.containsKey('post_id')) {
+                  postMap['id'] = postMap['post_id'];
+                }
+                if (postMap.containsKey('is_liked')) {
+                  postMap['isLiked'] = postMap['is_liked'].toString() == '1';
+                }
+                if (postMap.containsKey('created')) {
+                  postMap['created_at'] = postMap['created'];
+                }
+                return postMap;
+              })
+              .toList();
 
           if (users.isEmpty && posts.isEmpty) {
             return Center(

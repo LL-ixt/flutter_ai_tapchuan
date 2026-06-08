@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_state.dart';
 
 import 'package:flutter_ai_tapchuan/core/widgets/post_card.dart';
 import 'package:flutter_ai_tapchuan/core/widgets/avatar_widget.dart';
+
+class MockAuthCubit extends Cubit<AuthState> implements AuthCubit {
+  MockAuthCubit() : super(const AuthState.success(username: 'Student', role: 'HV', token: 'mock_token', userId: 'mock_uid'));
+  
+  @override
+  void login({required String phone, required String password}) {}
+  
+  @override
+  void logout() {}
+  
+  @override
+  void checkAuth() {}
+
+  @override
+  Future<bool> restoreSession() async => true;
+
+  @override
+  void updateUserInfo({String? username, String? avatar}) {}
+}
 
 void main() {
   setUpAll(() {
@@ -13,16 +35,25 @@ void main() {
   });
 
   group('PostCard Widget Tests', () {
+    Widget createWidgetUnderTest(Widget child) {
+      return BlocProvider<AuthCubit>(
+        create: (context) => MockAuthCubit(),
+        child: MaterialApp(
+          home: Scaffold(
+            body: child,
+          ),
+        ),
+      );
+    }
+
     testWidgets('1. Render Test: PostCard loads without overflow', (WidgetTester tester) async {
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PostCard(
-                postData: dummyPostData,
-                isLiked: false,
-                onLikeToggle: () {},
-              ),
+          createWidgetUnderTest(
+            PostCard(
+              postData: dummyPostData,
+              isLiked: false,
+              onLikeToggle: () {},
             ),
           ),
         );
@@ -45,13 +76,11 @@ void main() {
     testWidgets('2. Empty/Null State Test: Handle empty data without crashing', (WidgetTester tester) async {
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PostCard(
-                postData: const {}, // Empty data
-                isLiked: false,
-                onLikeToggle: () {},
-              ),
+          createWidgetUnderTest(
+            PostCard(
+              postData: const {}, // Empty data
+              isLiked: false,
+              onLikeToggle: () {},
             ),
           ),
         );
@@ -68,22 +97,25 @@ void main() {
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(
-          StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return MaterialApp(
-                home: Scaffold(
-                  body: PostCard(
-                    postData: dummyPostData,
-                    isLiked: likeState,
-                    onLikeToggle: () {
-                      setState(() {
-                        likeState = !likeState;
-                      });
-                    },
+          BlocProvider<AuthCubit>(
+            create: (context) => MockAuthCubit(),
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return MaterialApp(
+                  home: Scaffold(
+                    body: PostCard(
+                      postData: dummyPostData,
+                      isLiked: likeState,
+                      onLikeToggle: () {
+                        setState(() {
+                          likeState = !likeState;
+                        });
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         );
 

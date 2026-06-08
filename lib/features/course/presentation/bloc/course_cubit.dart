@@ -60,6 +60,7 @@ class CourseCubit extends Cubit<CourseState> {
           coverUrl: json['avatar'] ?? json['coverUrl'] ?? '',
           instructor: json['instructorName'] ?? 'Giáo viên',
           progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,
+          instructorId: json['instructorId']?.toString() ?? json['id']?.toString() ?? '',
         )).toList();
 
         final hasReachedMax = newCourses.length < _count;
@@ -103,6 +104,7 @@ class CourseCubit extends Cubit<CourseState> {
             coverUrl: json['avatar'] ?? json['coverUrl'] ?? '',
             instructor: json['instructorName'] ?? 'Giáo viên',
             progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,
+            instructorId: json['instructorId']?.toString() ?? json['id']?.toString() ?? '',
           )).toList();
 
           final hasReachedMax = newCourses.length < _count;

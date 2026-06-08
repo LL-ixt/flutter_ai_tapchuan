@@ -6,8 +6,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 //import 'package:flutter_ai_tapchuan/features/search/search_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_ai_tapchuan/features/notification/presentation/bloc/notification_cubit.dart';
 import 'features/main/presentation/pages/main_screen.dart';
 import 'features/chat/presentation/bloc/chat_cubit.dart';
+import 'package:flutter_ai_tapchuan/services/api_service.dart';
 
 void main() {
   runApp(
@@ -15,6 +17,10 @@ void main() {
       providers: [
         BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
         BlocProvider<ChatCubit>(create: (_) => ChatCubit()),
+        BlocProvider<NotificationCubit>(
+          create: (context) =>
+              NotificationCubit(authCubit: context.read<AuthCubit>()),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -54,6 +60,25 @@ class _AuthenticationHandlerState extends State<_AuthenticationHandler> {
   @override
   void initState() {
     super.initState();
+    // Đăng ký callback khi Token bị vô hiệu hóa (ví dụ do đăng nhập thiết bị khác)
+    ApiService.onTokenInvalid = () {
+      if (mounted) {
+        final authCubit = context.read<AuthCubit>();
+        if (authCubit.state.token != null &&
+            authCubit.state.token!.isNotEmpty) {
+          authCubit.logout();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Phiên đăng nhập đã hết hạn hoặc được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    };
     // Kiểm tra phiên đăng nhập đã lưu khi app khởi động
     _checkSavedSession();
   }

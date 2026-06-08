@@ -8,6 +8,8 @@ import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_
 import 'package:flutter_ai_tapchuan/features/post/presentation/bloc/post_action_state.dart';
 import 'package:flutter_ai_tapchuan/features/post/data/models/edit_post_models.dart';
 import 'package:flutter_ai_tapchuan/features/profile/presentation/pages/profile_screen.dart';
+import 'package:flutter_ai_tapchuan/services/api_service.dart';
+import 'package:flutter_ai_tapchuan/features/post/presentation/pages/create_post_screen.dart';
 import '../constants/color_constants.dart';
 import '../constants/text_style_constants.dart';
 import '../utils/dialog_utils.dart';
@@ -58,7 +60,7 @@ class PostCard extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     final author = postData['author'] ?? {};
     final isOnline = postData['is_online'] == '1'; // Or logic if available
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
@@ -69,7 +71,8 @@ class PostCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProfileScreen(userId: author['id'].toString()),
+                    builder: (context) =>
+                        ProfileScreen(userId: author['id'].toString()),
                   ),
                 );
               }
@@ -88,7 +91,8 @@ class PostCard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ProfileScreen(userId: author['id'].toString()),
+                      builder: (context) =>
+                          ProfileScreen(userId: author['id'].toString()),
                     ),
                   );
                 }
@@ -107,7 +111,11 @@ class PostCard extends StatelessWidget {
                         style: AppTextStyles.subtitle,
                       ),
                       const SizedBox(width: 4.0),
-                      const Icon(Icons.public, size: 14, color: AppColors.textSecondary),
+                      const Icon(
+                        Icons.public,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                     ],
                   ),
                 ],
@@ -257,7 +265,177 @@ class PostCard extends StatelessWidget {
     );
   }
 
+  bool _isTeacher(String? role) {
+    if (role == null) return false;
+    final r = role.toLowerCase().trim();
+    return r == 'gv' ||
+        r == '2' ||
+        r == 'giảng viên' ||
+        r == 'giang viên' ||
+        r == 'giangvien' ||
+        r == 'teacher' ||
+        r.contains('giáo viên') ||
+        r.contains('giao vien');
+  }
+
+  bool _isStudent(String? role) {
+    if (role == null) return false;
+    final r = role.toLowerCase().trim();
+    return r == 'hv' ||
+        r == 'hs' ||
+        r == '1' ||
+        r == 'học viên' ||
+        r == 'hoc vien' ||
+        r == 'học sinh' ||
+        r == 'hoc sinh' ||
+        r == 'student';
+  }
+
+  Future<void> _handleAssignmentSubmission(BuildContext context) async {
+    final authState = context.read<AuthCubit>().state;
+    final token = authState.token ?? '';
+    final myUserId = authState.userId ?? '';
+    final studentName = authState.username ?? 'Học viên';
+
+    final author = postData['author'] ?? {};
+    final teacherId = author['id']?.toString() ?? '';
+    final teacherName = author['username']?.toString() ?? 'Giảng viên';
+    final postId =
+        postData['id']?.toString() ?? postData['post_id']?.toString() ?? '';
+
+    if (token.isEmpty || myUserId.isEmpty) {
+      DialogUtils.showNotificationDialog(
+        context: context,
+        title: 'Lỗi',
+        message: 'Bạn cần đăng nhập để thực hiện chức năng này.',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    // 1. Hiển thị Loading Dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryBlue),
+      ),
+    );
+
+    try {
+      // 2. Gọi API getListCoursesOfStudent để kiểm tra trạng thái đăng ký thành công
+      final response = await ApiService.getListCoursesOfStudent(
+        token,
+        myUserId,
+        0,
+        100,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Tắt Loading Dialog
+      }
+
+      if (response['code'] == '1000' && response['data'] != null) {
+        final dataMap = response['data'] is Map ? response['data'] : {};
+        final List<dynamic> courses = dataMap['courses'] ?? [];
+
+        Map<String, dynamic>? matchedCourse;
+        for (var c in courses) {
+          final instName =
+              c['instructorName']?.toString() ?? c['name']?.toString() ?? '';
+          final instId =
+              c['instructorId']?.toString() ?? c['id']?.toString() ?? '';
+
+          if ((instId.isNotEmpty && instId == teacherId) ||
+              (instName.isNotEmpty &&
+                  instName.toLowerCase().trim() ==
+                      teacherName.toLowerCase().trim())) {
+            matchedCourse = c;
+            break;
+          }
+        }
+
+        if (matchedCourse != null) {
+          // 3. Đã đăng ký thành công! Tiến hành pre-fill thông tin
+          final courseName =
+              matchedCourse['name'] ?? matchedCourse['title'] ?? 'Khóa học';
+          final courseId = matchedCourse['id']?.toString() ?? '1';
+
+          final described = postData['described']?.toString() ?? '';
+          String assignmentName = 'Bài nộp bài tập';
+          if (described.trim().isNotEmpty) {
+            assignmentName = described.split('\n').first.trim();
+            if (assignmentName.length > 50) {
+              assignmentName = '${assignmentName.substring(0, 47)}...';
+            }
+          }
+
+          final now = DateTime.now();
+          final formattedTime =
+              "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
+          final initialText =
+              "$assignmentName - $courseName\n"
+              "Giảng viên: $teacherName\n"
+              "Học viên: $studentName\n"
+              "Thời gian: $formattedTime";
+
+          if (context.mounted) {
+            // Chuyển hướng đến CreatePostScreen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CreatePostScreen(
+                  initialText: initialText,
+                  courseId: courseId,
+                  exerciseId: postId,
+                ),
+              ),
+            );
+          }
+        } else {
+          // Chưa đăng ký thành công với giảng viên này
+          if (context.mounted) {
+            DialogUtils.showNotificationDialog(
+              context: context,
+              title: 'Chưa đăng ký học',
+              message:
+                  'Bạn cần đăng ký khóa học thành công với giảng viên $teacherName để nộp bài.',
+              isSuccess: false,
+            );
+          }
+        }
+      } else {
+        if (context.mounted) {
+          DialogUtils.showNotificationDialog(
+            context: context,
+            title: 'Lỗi',
+            message:
+                'Không thể xác thực trạng thái đăng ký: ${response['message'] ?? 'Lỗi kết nối.'}',
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Đảm bảo đóng loading dialog
+        DialogUtils.showNotificationDialog(
+          context: context,
+          title: 'Lỗi hệ thống',
+          message: 'Đã xảy ra lỗi khi kiểm tra đăng ký học: $e',
+          isSuccess: false,
+        );
+      }
+    }
+  }
+
   Widget _buildActions(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final myRole = authState.role;
+    final authorRole = postData['author']?['role']?.toString();
+
+    final showSubmitButton = _isStudent(myRole) && _isTeacher(authorRole);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: Row(
@@ -277,21 +455,24 @@ class PostCard extends StatelessWidget {
             color: AppColors.primaryIconAction,
             onTap: () => _showCommentBottomSheet(context),
           ),
-          _buildActionButton(
-            icon: Icons.send_outlined,
-            label: 'Nộp bài',
-            color: AppColors.primaryIconAction,
-            onTap: () {},
-          ),
+          if (showSubmitButton)
+            _buildActionButton(
+              icon: Icons.send_outlined,
+              label: 'Nộp bài',
+              color: AppColors.primaryBlue,
+              onTap: () => _handleAssignmentSubmission(context),
+            ),
         ],
       ),
     );
   }
 
   void _showOptionsBottomSheet(BuildContext context) {
+    final described = postData['described']?.toString() ?? '';
+    final isSubmissionPost = described.contains('Giảng viên:') && described.contains('Học viên:');
     final canEdit =
-        postData['can_edit']?.toString() !=
-        '0'; // default true if null or not '0'
+        (postData['can_edit']?.toString() != '0') && !isSubmissionPost;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -324,6 +505,12 @@ class PostCard extends StatelessWidget {
                     color: canEdit ? null : Colors.grey,
                   ),
                 ),
+                subtitle: isSubmissionPost
+                    ? const Text(
+                        'Bài nộp bài tập không thể chỉnh sửa',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      )
+                    : null,
                 onTap: canEdit
                     ? () {
                         Navigator.pop(ctx);
@@ -342,6 +529,12 @@ class PostCard extends StatelessWidget {
                     color: canEdit ? AppColors.errorRed : Colors.grey,
                   ),
                 ),
+                subtitle: isSubmissionPost
+                    ? const Text(
+                        'Bài nộp bài tập không thể xóa',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      )
+                    : null,
                 onTap: canEdit
                     ? () {
                         Navigator.pop(ctx);
@@ -371,7 +564,8 @@ class PostCard extends StatelessWidget {
   void _showDeleteConfirmDialog(BuildContext context) {
     final authState = context.read<AuthCubit>().state;
     final token = authState.token ?? '';
-    final postId = postData['id'] ?? '';
+    final postId =
+        postData['id']?.toString() ?? postData['post_id']?.toString() ?? '';
 
     showDialog(
       context: context,
@@ -453,7 +647,8 @@ class PostCard extends StatelessWidget {
   void _showReportPostDialog(BuildContext context) {
     final authState = context.read<AuthCubit>().state;
     final token = authState.token ?? '';
-    final postId = postData['id'] ?? '';
+    final postId =
+        postData['id']?.toString() ?? postData['post_id']?.toString() ?? '';
     final TextEditingController reasonController = TextEditingController();
 
     showDialog(
@@ -553,7 +748,8 @@ class PostCard extends StatelessWidget {
   void _showEditPostDialog(BuildContext context) {
     final authState = context.read<AuthCubit>().state;
     final token = authState.token ?? '';
-    final postId = postData['id'] ?? '';
+    final postId =
+        postData['id']?.toString() ?? postData['post_id']?.toString() ?? '';
     final TextEditingController textController = TextEditingController(
       text: postData['described'] ?? '',
     );
@@ -656,8 +852,10 @@ class PostCard extends StatelessWidget {
   void _showCommentBottomSheet(BuildContext context) {
     final authState = context.read<AuthCubit>().state;
     final token = authState.token ?? '';
-    final userId = authState.userId ?? 'u1';
-    final postId = postData['id'] ?? '';
+    final author = postData['author'] ?? {};
+    final postOwnerId = author['id']?.toString() ?? authState.userId ?? 'u1';
+    final postId =
+        postData['id']?.toString() ?? postData['post_id']?.toString() ?? '';
 
     showModalBottomSheet(
       context: context,
@@ -669,7 +867,7 @@ class PostCard extends StatelessWidget {
           child: _CommentBottomSheet(
             postId: postId,
             token: token,
-            userId: userId,
+            userId: postOwnerId,
           ),
         );
       },
@@ -981,10 +1179,11 @@ final Map<String, dynamic> dummyPostData = {
     "id": "user_987654",
     "username": "Nguyễn Tiến Thành",
     "avatar": "https://i.pravatar.cc/150?u=user_987654",
+    "role": "GV",
   },
   "described":
       "Đây là bài nộp bài tập số 1 của nhóm mình. Có 2 video so sánh giữa bài mẫu và bài làm.",
-  "created_at": "2 giờ trước",
+  "created": "2 giờ trước",
   "like": "150",
   "comment": "32",
 };

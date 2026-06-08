@@ -1,19 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/services/api_service.dart';
+import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../data/models/notification_mock_data.dart';
 
 part 'notification_state.dart';
 
 class NotificationCubit extends Cubit<NotificationState> {
-  final String? token;
+  final AuthCubit? authCubit;
+  final String? _initialToken;
 
-  NotificationCubit({this.token}) : super(NotificationInitial());
+  NotificationCubit({this.authCubit, String? token})
+      : _initialToken = token,
+        super(NotificationInitial());
 
   Future<void> loadNotifications() async {
     emit(NotificationLoading());
     try {
-      final currentToken = token;
+      final currentToken = authCubit?.state.token ?? _initialToken;
       if (currentToken == null || currentToken.isEmpty) {
         final notifications = NotificationMockData.getMockNotifications();
         emit(NotificationLoaded(notifications: notifications));
@@ -38,7 +42,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   }
 
   Future<void> markAsRead(String id) async {
-    final currentToken = token;
+    final currentToken = authCubit?.state.token ?? _initialToken;
     if (currentToken != null && currentToken.isNotEmpty) {
       await ApiService.setReadNotification(currentToken, id);
     }
@@ -59,7 +63,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   Future<void> markAllAsRead() async {
     if (state is NotificationLoaded) {
       final currentState = state as NotificationLoaded;
-      final currentToken = token;
+      final currentToken = authCubit?.state.token ?? _initialToken;
       if (currentToken != null && currentToken.isNotEmpty) {
         final unreadNotifications = currentState.notifications.where(
           (notif) => !notif.isRead,

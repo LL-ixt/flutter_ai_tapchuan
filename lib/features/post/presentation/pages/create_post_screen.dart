@@ -11,26 +11,70 @@ import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.d
 import '../../../../core/utils/dialog_utils.dart';
 
 class CreatePostScreen extends StatelessWidget {
-  const CreatePostScreen({super.key});
+  final String? initialText;
+  final String? courseId;
+  final String? exerciseId;
+
+  const CreatePostScreen({
+    super.key,
+    this.initialText,
+    this.courseId,
+    this.exerciseId,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PostCubit(),
-      child: const _CreatePostView(),
+      create: (context) => PostCubit()..updateText(initialText ?? ''),
+      child: _CreatePostView(
+        initialText: initialText,
+        courseId: courseId,
+        exerciseId: exerciseId,
+      ),
     );
   }
 }
 
-class _CreatePostView extends StatelessWidget {
-  const _CreatePostView();
+class _CreatePostView extends StatefulWidget {
+  final String? initialText;
+  final String? courseId;
+  final String? exerciseId;
+
+  const _CreatePostView({
+    this.initialText,
+    this.courseId,
+    this.exerciseId,
+  });
+
+  @override
+  State<_CreatePostView> createState() => _CreatePostViewState();
+}
+
+class _CreatePostViewState extends State<_CreatePostView> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PostCubit, PostState>(
       listener: (context, state) {
         if (state is PostSuccess) {
-          context.read<FeedCubit>().addNewPost(state.newPost);
+          try {
+            context.read<FeedCubit>().addNewPost(state.newPost);
+          } catch (e) {
+            debugPrint("FeedCubit is not available in context: $e");
+          }
           DialogUtils.showNotificationDialog(
             context: context,
             title: 'Thành công',
@@ -78,7 +122,11 @@ class _CreatePostView extends StatelessWidget {
                   onPressed: (canSubmit && !isLoading)
                       ? () {
                           final token = context.read<AuthCubit>().state.token;
-                          context.read<PostCubit>().submitPost(token: token);
+                          context.read<PostCubit>().submitPost(
+                            token: token,
+                            courseId: widget.courseId,
+                            exerciseId: widget.exerciseId,
+                          );
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -160,6 +208,8 @@ class _CreatePostView extends StatelessWidget {
                 // Hàng 2: TextField
                 Expanded(
                   child: TextField(
+                    controller: _controller,
+                    readOnly: widget.exerciseId != null && widget.exerciseId!.isNotEmpty,
                     onChanged: (text) =>
                         context.read<PostCubit>().updateText(text),
                     maxLines: null,

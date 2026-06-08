@@ -7,6 +7,7 @@ import 'post_state.dart';
 import '../../../../services/api_service.dart';
 import '../../data/models/add_post_models.dart';
 import '../../../../core/constants/test_video_bytes.dart';
+import '../../data/models/comment_models.dart';
 
 class PostCubit extends Cubit<PostState> {
   PostCubit() : super(const PostInitial());
@@ -22,7 +23,9 @@ class PostCubit extends Cubit<PostState> {
       try {
         final result = await FilePicker.pickFiles(type: FileType.video);
         if (result != null && result.files.isNotEmpty) {
-          emit((state as PostInitial).copyWith(leftVideoFile: result.files.first));
+          emit(
+            (state as PostInitial).copyWith(leftVideoFile: result.files.first),
+          );
         }
       } catch (e) {
         emit(PostError('Lỗi chọn file: $e'));
@@ -41,7 +44,9 @@ class PostCubit extends Cubit<PostState> {
       try {
         final result = await FilePicker.pickFiles(type: FileType.video);
         if (result != null && result.files.isNotEmpty) {
-          emit((state as PostInitial).copyWith(rightVideoFile: result.files.first));
+          emit(
+            (state as PostInitial).copyWith(rightVideoFile: result.files.first),
+          );
         }
       } catch (e) {
         emit(PostError('Lỗi chọn file: $e'));
@@ -69,10 +74,18 @@ class PostCubit extends Cubit<PostState> {
       emit(PostLoading());
 
       try {
-        final leftBytes = currentState.leftVideoFile?.bytes ?? currentState.rightVideoFile?.bytes;
-        final leftName = currentState.leftVideoFile?.name ?? currentState.rightVideoFile?.name;
-        final rightBytes = currentState.rightVideoFile?.bytes ?? currentState.leftVideoFile?.bytes;
-        final rightName = currentState.rightVideoFile?.name ?? currentState.leftVideoFile?.name;
+        final leftBytes =
+            currentState.leftVideoFile?.bytes ??
+            currentState.rightVideoFile?.bytes;
+        final leftName =
+            currentState.leftVideoFile?.name ??
+            currentState.rightVideoFile?.name;
+        final rightBytes =
+            currentState.rightVideoFile?.bytes ??
+            currentState.leftVideoFile?.bytes;
+        final rightName =
+            currentState.rightVideoFile?.name ??
+            currentState.leftVideoFile?.name;
 
         AddPostRequest request;
         if (kIsWeb) {
@@ -82,22 +95,26 @@ class PostCubit extends Cubit<PostState> {
             leftVideoName: leftName,
             rightVideoBytes: rightBytes,
             rightVideoName: rightName,
-            courseId: courseId ?? 'course_123',
-            exerciseId: exerciseId ?? 'exercise_123',
+            courseId: courseId ?? '',
+            exerciseId: exerciseId ?? '',
             described: currentState.text,
             deviceSlave: deviceSlave ?? 'device_slave_123',
             deviceMaster: deviceMaster ?? 'device_master_123',
           );
         } else {
-          final leftPath = currentState.leftVideoFile?.path ?? currentState.rightVideoFile?.path;
-          final rightPath = currentState.rightVideoFile?.path ?? currentState.leftVideoFile?.path;
+          final leftPath =
+              currentState.leftVideoFile?.path ??
+              currentState.rightVideoFile?.path;
+          final rightPath =
+              currentState.rightVideoFile?.path ??
+              currentState.leftVideoFile?.path;
 
           request = AddPostRequest(
             token: token,
             leftVideo: leftPath != null ? File(leftPath) : null,
             rightVideo: rightPath != null ? File(rightPath) : null,
-            courseId: courseId ?? 'course_123',
-            exerciseId: exerciseId ?? 'exercise_123',
+            courseId: courseId ?? '',
+            exerciseId: exerciseId ?? '',
             described: currentState.text,
             deviceSlave: deviceSlave ?? 'device_slave_123',
             deviceMaster: deviceMaster ?? 'device_master_123',
@@ -107,12 +124,30 @@ class PostCubit extends Cubit<PostState> {
         final response = await ApiService.addPost(request);
 
         if (response.code == '1000') {
+          if (exerciseId != null && exerciseId.isNotEmpty) {
+            try {
+              await ApiService.setComment(
+                SetCommentRequest(
+                  token: token,
+                  id: exerciseId,
+                  comment: 'Đã nộp bài tập bài viết này.',
+                  index: '0',
+                  count: '10',
+                ),
+              );
+            } catch (e) {
+              print("Error triggering submission notification comment: $e");
+            }
+          }
+
           final newPost = {
-            "id": response.postId ?? "post_new_${DateTime.now().millisecondsSinceEpoch}",
+            "id":
+                response.postId ??
+                "post_new_${DateTime.now().millisecondsSinceEpoch}",
             "author": {
               "id": "user_current",
               "username": "Nguyễn Tiến Thành",
-              "avatar": "https://i.pravatar.cc/150?img=60"
+              "avatar": "https://i.pravatar.cc/150?img=60",
             },
             "described": currentState.text,
             "created_at": "Vừa xong",
