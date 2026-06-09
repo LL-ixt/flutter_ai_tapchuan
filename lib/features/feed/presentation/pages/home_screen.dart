@@ -104,7 +104,7 @@ class _HomeViewState extends State<_HomeView> {
                 if (currentUsername.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Hi $currentUsername',
+                    'Xin chào $currentUsername',
                     style: const TextStyle(
                       color: AppColors.primaryBlue,
                       fontSize: 13,

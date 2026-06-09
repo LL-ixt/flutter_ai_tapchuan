@@ -18,16 +18,19 @@ import 'package:flutter_ai_tapchuan/features/feed/data/models/get_list_posts_mod
 class ApiService {
   static const String baseUrl = "https://group1.it4788.sukkaito.id.vn/it4788";
 
-  // Callback to handle token invalidation
-  static void Function()? onTokenInvalid;
+  // Callback toàn cục để xử lý khi phát hiện Token hết hạn/không hợp lệ
+  static Function()? onTokenExpired;
 
   static dynamic _decodeAndCheck(String body) {
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map) {
         final code = decoded['code']?.toString();
-        if (code == '9998' || code == '1009') {
-          onTokenInvalid?.call();
+        final message = decoded['message']?.toString().toLowerCase() ?? '';
+        if (code == '9998' || 
+            code == '1009' || 
+            (code == '1004' && message.contains('token'))) {
+          onTokenExpired?.call();
         }
       }
       return decoded;
@@ -146,7 +149,7 @@ class ApiService {
       print("status code login: ${response.statusCode}"); // Debug log
       print("=== API Login Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         // Trả về thông báo lỗi kết nối
         return {
@@ -189,7 +192,7 @@ class ApiService {
       print("status code signup: ${response.statusCode}"); // Debug log
       print("=== API Signup Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -208,7 +211,7 @@ class ApiService {
       print("status code logout: ${response.statusCode}"); // Debug log
       print("=== API Logout Response: ${response.body}"); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -227,7 +230,7 @@ class ApiService {
       print("status code getVerifyCode: ${response.statusCode}");
       print("=== API Get Verify Code Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -254,7 +257,7 @@ class ApiService {
         "=== API Check Verify Code Response: ${response.body}",
       ); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -285,7 +288,7 @@ class ApiService {
         "=== API Change Info After Signup Response: ${response.body}",
       ); // Debug log
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -329,7 +332,7 @@ class ApiService {
       print("status code search: ${response.statusCode}");
       print("=== API Search Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -362,7 +365,7 @@ class ApiService {
       print("status code getSavedSearch: ${response.statusCode}");
       print("=== API Get Saved Search Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -389,7 +392,7 @@ class ApiService {
       print("status code delSavedSearch: ${response.statusCode}");
       print("=== API Del Saved Search Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -422,7 +425,7 @@ class ApiService {
       print("status code getListStudents: ${response.statusCode}");
       print("=== API Get List Students Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -449,7 +452,7 @@ class ApiService {
       print("status code getUserInfo: ${response.statusCode}");
       print("=== API Get User Info Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -527,7 +530,7 @@ class ApiService {
       print("=== API Set User Info Response: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -560,7 +563,7 @@ class ApiService {
       print("status code getListCourses: ${response.statusCode}");
       print("=== API Get List Courses Of Student Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -593,7 +596,7 @@ class ApiService {
       print("status code getListBlocks: ${response.statusCode}");
       print("=== API Get List Blocks Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -626,7 +629,7 @@ class ApiService {
       print("status code setBlock: ${response.statusCode}");
       print("=== API Set Block Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -646,7 +649,7 @@ class ApiService {
       print("status code getPushSettings: ${response.statusCode}");
       print("=== API Get Push Settings Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -700,7 +703,7 @@ class ApiService {
       print("status code setPushSettings: ${response.statusCode}");
       print("=== API Set Push Settings Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -859,7 +862,7 @@ class ApiService {
       // print("=== API Edit Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return EditPostResponse.fromJson(jsonDecode(response.body));
+        return EditPostResponse.fromJson(_decodeAndCheck(response.body));
       } else if (response.statusCode == 404) {
         return EditPostResponse(
           code: '404',
@@ -886,7 +889,7 @@ class ApiService {
       print("=== API Delete Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return DeletePostResponse.fromJson(jsonDecode(response.body));
+        return DeletePostResponse.fromJson(_decodeAndCheck(response.body));
       } else if (response.statusCode == 404) {
         return DeletePostResponse(
           code: '404',
@@ -913,7 +916,7 @@ class ApiService {
       print("=== API Report Post Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return ReportPostResponse.fromJson(jsonDecode(response.body));
+        return ReportPostResponse.fromJson(_decodeAndCheck(response.body));
       } else {
         return ReportPostResponse(
           code: '1001',
@@ -935,7 +938,7 @@ class ApiService {
       print("=== API Get Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
+        var jsonResponse = _decodeAndCheck(response.body);
         var rawData = jsonResponse['data'];
         List? list;
         if (rawData is List) {
@@ -1005,7 +1008,7 @@ class ApiService {
       print("=== API Like Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return LikeResponse.fromJson(jsonDecode(response.body));
+        return LikeResponse.fromJson(_decodeAndCheck(response.body));
       } else if (response.statusCode == 404) {
         return LikeResponse(
           code: '404',
@@ -1032,7 +1035,7 @@ class ApiService {
       print("=== API Set Comment Response: ${response.body}");
 
       if (response.statusCode == 200) {
-        return SetCommentResponse.fromJson(jsonDecode(response.body));
+        return SetCommentResponse.fromJson(_decodeAndCheck(response.body));
       } else {
         return SetCommentResponse(
           code: '1001',
@@ -1202,7 +1205,7 @@ class ApiService {
       print("status code changePassword: ${response.statusCode}");
       print("=== API Change Password Response: ${response.body}");
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -1355,7 +1358,7 @@ class ApiService {
       print("status code getRequestedEnrollment: ${response.statusCode}");
       print("=== API Get Requested Enrollment Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -1382,7 +1385,7 @@ class ApiService {
       print("status code setApproveEnrollment: ${response.statusCode}");
       print("=== API Set Approve Enrollment Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -1409,7 +1412,7 @@ class ApiService {
       print("status code setRequestCourse: ${response.statusCode}");
       print("=== API Set Request Course Response: ${response.body}");
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } else {
         return {
           'code': '1001',
@@ -1435,7 +1438,7 @@ class ApiService {
       print("status code checkNewVersion: ${response.statusCode}");
       print("=== API Check New Version Response: ${response.body}");
       try {
-        return jsonDecode(response.body);
+        return _decodeAndCheck(response.body);
       } catch (_) {
         return {
           'code': '1001',

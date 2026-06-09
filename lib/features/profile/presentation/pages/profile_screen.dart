@@ -498,6 +498,11 @@ class _ProfileViewState extends State<_ProfileView> {
                       color: AppColors.textPrimary,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${user.listing} Đang theo dõi, ${user.followed} Người theo dõi',
+                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     user.bio,
@@ -552,123 +557,132 @@ class _ProfileViewState extends State<_ProfileView> {
                       ),
                     )
                   else
-                    Row(
-                      children: [
-                        if (_isTeacher(user.role) && 
-                            _isStudent(context.read<AuthCubit>().state.role)) ...[
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isRegistered
-                                  ? null
-                                  : () async {
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: const Text('Gửi đăng ký'),
-                                          content: const Text('Bạn muốn gửi yêu cầu đăng ký học đến giáo viên này?'),
-                                          actions: [
-                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(ctx, true), 
-                                              child: const Text('Gửi', style: TextStyle(color: AppColors.primaryBlue))
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                      if (confirm == true && context.mounted) {
-                                        final token = context.read<AuthCubit>().state.token ?? "";
-                                        final myUserId = context.read<AuthCubit>().state.userId ?? "";
-                                        final success = await context.read<ProfileCubit>().requestCourse(
-                                          token: token,
-                                          courseId: user.id,
-                                          userId: myUserId,
-                                        );
-                                        if (success && context.mounted) {
-                                          await _saveRegistration(user.id);
-                                          if (context.mounted) {
-                                            DialogUtils.showNotificationDialog(
-                                              context: context,
-                                              title: 'Thành công',
-                                              message: 'Đã gửi yêu cầu thành công!',
-                                              isSuccess: true,
-                                            );
-                                          }
-                                        } else if (context.mounted) {
-                                          DialogUtils.showNotificationDialog(
-                                            context: context,
-                                            title: 'Thất bại',
-                                            message: 'Có thể là một trong các nguyên nhân sau:\nBạn đã gửi yêu cầu đăng ký rồi\nNgười dùng này chưa xác thực\nLỗi hệ thống mà chúng tôi đang khắc phục',
-                                            isSuccess: false,
-                                          );
-                                        }
-                                      }
-                                  },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isRegistered ? Colors.grey[400] : AppColors.primaryBlue,
-                                disabledBackgroundColor: Colors.grey[400],
-                                disabledForegroundColor: Colors.white70,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              child: Text(
-                                _isRegistered ? 'Đã gửi yêu cầu' : 'Gửi đăng ký',
-                                style: TextStyle(
-                                  color: _isRegistered ? Colors.white70 : Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              final authState = context.read<AuthCubit>().state;
-                              final partnerInfo = {
-                                'id': user.id,
-                                'username': user.name,
-                                'avatar': user.avatarUrl,
-                              };
-                              final myInfo = {
-                                'id': authState.userId,
-                                'username': authState.username,
-                                'avatar': authState.avatar,
-                              };
+                    Builder(
+                      builder: (context) {
+                        final currentUserRole = context.read<AuthCubit>().state.role;
+                        final isGvAndHv = (_isTeacher(user.role) && _isStudent(currentUserRole)) ||
+                                          (_isStudent(user.role) && _isTeacher(currentUserRole));
+                        final isConnected = user.isRelated == '1';
+                        final showConnectionButton = isGvAndHv && (isConnected || (_isTeacher(user.role) && _isStudent(currentUserRole)));
 
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatRoomDetailScreen(
-                                    partnerInfo: partnerInfo,
-                                    token: authState.token ?? "",
-                                    myInfo: myInfo,
+                        return Row(
+                          children: [
+                            if (showConnectionButton) ...[
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: (isConnected || _isRegistered)
+                                      ? null
+                                      : () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: const Text('Gửi đăng ký'),
+                                              content: const Text('Bạn muốn gửi yêu cầu đăng ký học đến giáo viên này?'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(ctx, true), 
+                                                  child: const Text('Gửi', style: TextStyle(color: AppColors.primaryBlue))
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true && context.mounted) {
+                                            final token = context.read<AuthCubit>().state.token ?? "";
+                                            final myUserId = context.read<AuthCubit>().state.userId ?? "";
+                                            final success = await context.read<ProfileCubit>().requestCourse(
+                                              token: token,
+                                              courseId: user.id,
+                                              userId: myUserId,
+                                            );
+                                            if (success && context.mounted) {
+                                              await _saveRegistration(user.id);
+                                              if (context.mounted) {
+                                                DialogUtils.showNotificationDialog(
+                                                  context: context,
+                                                  title: 'Thành công',
+                                                  message: 'Đã gửi yêu cầu thành công!',
+                                                  isSuccess: true,
+                                                );
+                                              }
+                                            } else if (context.mounted) {
+                                              DialogUtils.showNotificationDialog(
+                                                context: context,
+                                                title: 'Thất bại',
+                                                message: 'Có thể là một trong các nguyên nhân sau:\nBạn đã gửi yêu cầu đăng ký rồi\nNgười dùng này chưa xác thực\nLỗi hệ thống mà chúng tôi đang khắc phục',
+                                                isSuccess: false,
+                                              );
+                                            }
+                                          }
+                                      },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: (isConnected || _isRegistered) ? AppColors.successGreen : AppColors.primaryBlue,
+                                    disabledBackgroundColor: AppColors.successGreen,
+                                    disabledForegroundColor: Colors.white70,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                  ),
+                                  child: Text(
+                                    isConnected ? 'Đã kết nối' : (_isRegistered ? 'Đã gửi yêu cầu' : 'Gửi đăng ký'),
+                                    style: TextStyle(
+                                      color: (isConnected || _isRegistered) ? Colors.white : Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.grey),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            child: const Text(
-                              'Nhắn tin',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                              const SizedBox(width: 12),
+                            ],
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  final authState = context.read<AuthCubit>().state;
+                                  final partnerInfo = {
+                                    'id': user.id,
+                                    'username': user.name,
+                                    'avatar': user.avatarUrl,
+                                  };
+                                  final myInfo = {
+                                    'id': authState.userId,
+                                    'username': authState.username,
+                                    'avatar': authState.avatar,
+                                  };
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatRoomDetailScreen(
+                                        partnerInfo: partnerInfo,
+                                        token: authState.token ?? "",
+                                        myInfo: myInfo,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.grey),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                ),
+                                child: const Text(
+                                  'Nhắn tin',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   const SizedBox(height: 16),
                 ],

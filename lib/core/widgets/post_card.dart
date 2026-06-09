@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_tapchuan/core/utils/time_format.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ai_tapchuan/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_ai_tapchuan/features/feed/presentation/bloc/feed_cubit.dart';
@@ -107,7 +108,7 @@ class PostCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        postData['created'] ?? 'Vừa xong',
+                        formatTimestamp(postData['created']),
                         style: AppTextStyles.subtitle,
                       ),
                       const SizedBox(width: 4.0),

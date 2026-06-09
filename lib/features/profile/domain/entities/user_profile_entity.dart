@@ -8,6 +8,9 @@ class UserProfileEntity {
   final String link;
   final String role;
   final bool isOnline;
+  final String isRelated;
+  final String listing;
+  final String followed;
 
   UserProfileEntity({
     required this.id,
@@ -19,6 +22,9 @@ class UserProfileEntity {
     required this.link,
     this.role = '',
     this.isOnline = false,
+    this.isRelated = '0',
+    this.listing = '0',
+    this.followed = '0',
   });
 
   UserProfileEntity copyWith({
@@ -31,6 +37,9 @@ class UserProfileEntity {
     String? link,
     String? role,
     bool? isOnline,
+    String? isRelated,
+    String? listing,
+    String? followed,
   }) {
     return UserProfileEntity(
       id: id ?? this.id,
@@ -42,6 +51,9 @@ class UserProfileEntity {
       link: link ?? this.link,
       role: role ?? this.role,
       isOnline: isOnline ?? this.isOnline,
+      isRelated: isRelated ?? this.isRelated,
+      listing: listing ?? this.listing,
+      followed: followed ?? this.followed,
     );
   }
 }
