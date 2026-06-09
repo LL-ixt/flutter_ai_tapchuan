@@ -42,11 +42,19 @@ class PostCard extends StatelessWidget {
           const SizedBox(height: 8.0),
           if (postData['described'] != null &&
               postData['described'].toString().isNotEmpty)
-            _buildBody(),
+            GestureDetector(
+              onTap: () => _showCommentBottomSheet(context),
+              behavior: HitTestBehavior.opaque,
+              child: _buildBody(),
+            ),
           const SizedBox(height: 8.0),
           _buildMedia(context),
           const SizedBox(height: 8.0),
-          _buildStats(),
+          GestureDetector(
+            onTap: () => _showCommentBottomSheet(context),
+            behavior: HitTestBehavior.opaque,
+            child: _buildStats(),
+          ),
           const Divider(
             color: AppColors.dividerBorder,
             height: 1.0,
@@ -470,7 +478,8 @@ class PostCard extends StatelessWidget {
 
   void _showOptionsBottomSheet(BuildContext context) {
     final described = postData['described']?.toString() ?? '';
-    final isSubmissionPost = described.contains('Giảng viên:') && described.contains('Học viên:');
+    final isSubmissionPost =
+        described.contains('Giảng viên:') && described.contains('Học viên:');
     final canEdit =
         (postData['can_edit']?.toString() != '0') && !isSubmissionPost;
 

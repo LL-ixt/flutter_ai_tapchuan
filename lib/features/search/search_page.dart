@@ -234,8 +234,14 @@ class _SearchPageViewState extends State<_SearchPageView> {
                 if (p is! Map<String, dynamic>) return false;
                 final described = p['described']?.toString() ?? '';
                 final title = p['title']?.toString() ?? '';
+                final author = p['author'] is Map ? p['author'] as Map : {};
+                final authorName = author['name']?.toString() ?? '';
+                final authorUsername = author['username']?.toString() ?? '';
+
                 return _matchesSearch(described, _searchQuery) ||
-                    _matchesSearch(title, _searchQuery);
+                    _matchesSearch(title, _searchQuery) ||
+                    _matchesSearch(authorName, _searchQuery) ||
+                    _matchesSearch(authorUsername, _searchQuery);
               })
               .map((e) {
                 final postMap = Map<String, dynamic>.from(e as Map);
@@ -454,9 +460,21 @@ class _SearchPageViewState extends State<_SearchPageView> {
     );
   }
 
+  String _removeDiacritics(String str) {
+    var withDiacritics =
+        'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ';
+    var withoutDiacritics =
+        'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD';
+
+    for (int i = 0; i < withDiacritics.length; i++) {
+      str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
+    }
+    return str;
+  }
+
   bool _matchesSearch(String target, String keyword) {
-    final normalizedTarget = target.toLowerCase();
-    final normalizedKeyword = keyword.toLowerCase().trim();
+    final normalizedTarget = _removeDiacritics(target.toLowerCase());
+    final normalizedKeyword = _removeDiacritics(keyword.toLowerCase().trim());
     if (normalizedKeyword.isEmpty) return false;
 
     // Exact match

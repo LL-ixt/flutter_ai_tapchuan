@@ -1,4 +1,7 @@
-String formatTimestamp(String timestamp) {
+String formatTimestamp(String? timestamp) {
+    if (timestamp == null || timestamp.isEmpty) {
+      return 'Vừa xong';
+    }
     try {
       DateTime date;
       if (timestamp.contains('T') || timestamp.contains('-')) {
